@@ -28,17 +28,20 @@ public class Player {
 
     private PlayerWindow window;
 
+    //Variavel teste
+    private String[][] listaReproducao = new String[2][2];
+
     private int currentFrame = 0;
 
-    private final ActionListener buttonListenerPlayNow = e -> ;
-    private final ActionListener buttonListenerRemove = e -> ;
-    private final ActionListener buttonListenerAddSong = e -> ;
-    private final ActionListener buttonListenerPlayPause = e -> ;
-    private final ActionListener buttonListenerStop = e -> ;
-    private final ActionListener buttonListenerNext = e -> ;
-    private final ActionListener buttonListenerPrevious = e -> ;
-    private final ActionListener buttonListenerShuffle = e -> ;
-    private final ActionListener buttonListenerLoop = e -> ;
+    private final ActionListener buttonListenerPlayNow = e -> {};
+    private final ActionListener buttonListenerRemove = e -> {};
+    private final ActionListener buttonListenerAddSong = e -> {};
+    private final ActionListener buttonListenerPlayPause = e -> {};
+    private final ActionListener buttonListenerStop = e -> {};
+    private final ActionListener buttonListenerNext = e -> {};
+    private final ActionListener buttonListenerPrevious = e -> {};
+    private final ActionListener buttonListenerShuffle = e -> {};
+    private final ActionListener buttonListenerLoop = e -> {};
     private final MouseInputAdapter scrubberMouseInputAdapter = new MouseInputAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -55,8 +58,8 @@ public class Player {
 
     public Player() {
         EventQueue.invokeLater(() -> window = new PlayerWindow(
-                TITULO_DA_JANELA,
-                LISTA_DE_REPRODUÇÃO,
+                "Reprodutor",
+                listaReproducao,
                 buttonListenerPlayNow,
                 buttonListenerRemove,
                 buttonListenerAddSong,
