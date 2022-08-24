@@ -6,6 +6,7 @@ import javazoom.jl.player.FactoryRegistry;
 import support.PlayerWindow;
 import support.Song;
 
+import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -13,7 +14,7 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class Player {
+public class Player{
 
     /**
      * The MPEG audio bitstream.
@@ -36,44 +37,43 @@ public class Player {
 
     private int currentFrame = 0;
 
-    private final ActionListener buttonListenerPlayNow = e -> {
-        this.currentFrame = 0;
-        if(this.bitstream != null){
-            try {
-                bitstream.close();
-            } catch (BitstreamException ex) {
-                throw new RuntimeException(ex);
+    private final ActionListener buttonListenerPlayNow = e -> { new SwingWorker() {
+        @Override
+        protected Object doInBackground() throws Exception {
+            window.setPlayingSongInfo(listaSong[0].getTitle(), listaSong[0].getAlbum(), listaSong[0].getArtist());
+            currentFrame = 0;
+            if(bitstream != null){
+                try {
+                    bitstream.close();
+                } catch (BitstreamException ex) {
+                    throw new RuntimeException(ex);
+                }
+
+                device.close();
             }
 
-            device.close();
-        }
-
-        try {
-            this.device = FactoryRegistry.systemRegistry().createAudioDevice();
-        } catch (JavaLayerException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        try {
-            this.device.open(this.decoder = new Decoder());
-        } catch (JavaLayerException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        try {
-            this.bitstream = new Bitstream(listaSong[0].getBufferedInputStream());
-        } catch (FileNotFoundException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        while (true) {
             try {
-                if (!this.playNextFrame()) break;
-            } catch (JavaLayerException ex) {
-                throw new RuntimeException(ex);
+                device = FactoryRegistry.systemRegistry().createAudioDevice();
+            } catch (JavaLayerException ex) {}
+
+            try {
+                device.open(decoder = new Decoder());
+            } catch (JavaLayerException ex) {}
+
+            try {
+                bitstream = new Bitstream(listaSong[0].getBufferedInputStream());
+            } catch (FileNotFoundException ex) {}
+
+            while (true) {
+                try {
+                    playNextFrame();
+                } catch (JavaLayerException ex) {}
             }
+
         }
+    }.execute();
     };
+
     private final ActionListener buttonListenerRemove = e -> {};
     private final ActionListener buttonListenerAddSong = e -> {
         Song novo;
@@ -92,6 +92,7 @@ public class Player {
         this.window.setQueueList(listaString, novo.getDisplayInfo());
         listaSong[0] = novo;
     };
+
     private final ActionListener buttonListenerPlayPause = e -> {};
     private final ActionListener buttonListenerStop = e -> {};
     private final ActionListener buttonListenerNext = e -> {};
