@@ -10,6 +10,8 @@ import javax.swing.event.MouseInputAdapter;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class Player {
 
@@ -29,13 +31,67 @@ public class Player {
     private PlayerWindow window;
 
     //Variavel teste
-    private String[][] listaReproducao = new String[2][2];
+    private String[][] listaString = new String[1][];
+    private Song[] listaSong = new Song[1];
 
     private int currentFrame = 0;
 
-    private final ActionListener buttonListenerPlayNow = e -> {};
+    private final ActionListener buttonListenerPlayNow = e -> {
+        this.currentFrame = 0;
+        if(this.bitstream != null){
+            try {
+                bitstream.close();
+            } catch (BitstreamException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            device.close();
+        }
+
+        try {
+            this.device = FactoryRegistry.systemRegistry().createAudioDevice();
+        } catch (JavaLayerException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        try {
+            this.device.open(this.decoder = new Decoder());
+        } catch (JavaLayerException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        try {
+            this.bitstream = new Bitstream(listaSong[0].getBufferedInputStream());
+        } catch (FileNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        while (true) {
+            try {
+                if (!this.playNextFrame()) break;
+            } catch (JavaLayerException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    };
     private final ActionListener buttonListenerRemove = e -> {};
-    private final ActionListener buttonListenerAddSong = e -> {};
+    private final ActionListener buttonListenerAddSong = e -> {
+        Song novo;
+        try {
+            novo = this.window.openFileChooser();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (BitstreamException ex) {
+            throw new RuntimeException(ex);
+        } catch (UnsupportedTagException ex) {
+            throw new RuntimeException(ex);
+        } catch (InvalidDataException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        this.window.setQueueList(listaString, novo.getDisplayInfo());
+        listaSong[0] = novo;
+    };
     private final ActionListener buttonListenerPlayPause = e -> {};
     private final ActionListener buttonListenerStop = e -> {};
     private final ActionListener buttonListenerNext = e -> {};
@@ -59,7 +115,7 @@ public class Player {
     public Player() {
         EventQueue.invokeLater(() -> window = new PlayerWindow(
                 "Reprodutor",
-                listaReproducao,
+                listaString,
                 buttonListenerPlayNow,
                 buttonListenerRemove,
                 buttonListenerAddSong,

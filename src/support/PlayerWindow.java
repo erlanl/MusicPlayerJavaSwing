@@ -134,7 +134,7 @@ public class PlayerWindow {
 
         queuePanel.setLayout(new BorderLayout());
         queueListPane.setViewportView(queueList);
-        setQueueList(queueArray);
+        setQueueList(queueArray, null);
         queuePanelButtons.setLayout(new BoxLayout(queuePanelButtons, BoxLayout.X_AXIS));
         queuePanelButtons.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         playNowButton = new JButton("Play Now");
@@ -267,7 +267,8 @@ public class PlayerWindow {
      *
      * @param queueArray String[][] with the queue. The array should contain in each position one Song converted to array.
      */
-    public void setQueueList(String[][] queueArray) {
+    public void setQueueList(String[][] queueArray, String[] addi) {
+        queueArray[0] = addi;
         queueList.setShowHorizontalLines(true);
         queueList.setDragEnabled(false);
         queueList.setColumnSelectionAllowed(false);
