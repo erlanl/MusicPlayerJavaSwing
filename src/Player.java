@@ -34,10 +34,13 @@ public class Player{
     //Variavel teste
     private String[][] listaString = new String[1][];
     private Song[] listaSong = new Song[1];
+    int stopPlayNow = 0;
 
     private int currentFrame = 0;
 
-    private final ActionListener buttonListenerPlayNow = e -> { new SwingWorker() {
+    private final ActionListener buttonListenerPlayNow = e -> {
+        stopPlayNow = 1;
+        new SwingWorker() {
         @Override
         protected Object doInBackground() throws Exception {
             window.setPlayingSongInfo(listaSong[0].getTitle(), listaSong[0].getAlbum(), listaSong[0].getArtist());
@@ -64,12 +67,16 @@ public class Player{
                 bitstream = new Bitstream(listaSong[0].getBufferedInputStream());
             } catch (FileNotFoundException ex) {}
 
+            stopPlayNow = 0;
             while (true) {
                 try {
+                    if(stopPlayNow == 1){
+                        break;
+                    }
                     playNextFrame();
                 } catch (JavaLayerException ex) {}
             }
-
+            return null;
         }
     }.execute();
     };
