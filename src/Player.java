@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Player{
 
@@ -32,8 +33,8 @@ public class Player{
     private PlayerWindow window;
 
     //Variavel teste
-    private String[][] listaString = new String[1][];
-    private Song[] listaSong = new Song[1];
+    private String[][] listaString = new String[0][];
+    private Song[] listaSong = new Song[0];
     int stopPlayNow = 0;
 
     private int currentFrame = 0;
@@ -96,8 +97,17 @@ public class Player{
             throw new RuntimeException(ex);
         }
 
-        this.window.setQueueList(listaString, novo.getDisplayInfo());
-        listaSong[0] = novo;
+        //fazendo a matriz onde cada posição é uma musica com array dinamic
+        int N = listaString.length;
+        listaString = Arrays.copyOf(listaString, N + 1);
+        listaString[N] = novo.getDisplayInfo();
+
+        this.window.setQueueList(listaString);
+
+        //"array dinamico"
+        int N2 = listaSong.length;
+        listaSong = Arrays.copyOf(listaSong, N2 + 1);
+        listaSong[N2] = novo;
     };
 
     private final ActionListener buttonListenerPlayPause = e -> {};
