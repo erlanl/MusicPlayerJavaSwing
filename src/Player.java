@@ -39,12 +39,29 @@ public class Player{
 
     private int currentFrame = 0;
 
+    public static String[][] removeElement( String [][] arr, int index ){
+        String[][] arrDestination = new String[arr.length - 1][];
+        int remainingElements = arr.length - ( index + 1 );
+        System.arraycopy(arr, 0, arrDestination, 0, index);
+        System.arraycopy(arr, index + 1, arrDestination, index, remainingElements);
+        return arrDestination;
+    }
+
+    public static Song[] removeElementSong( Song [] arr, int index ){
+        Song[] arrDestination = new Song[arr.length - 1];
+        int remainingElements = arr.length - ( index + 1 );
+        System.arraycopy(arr, 0, arrDestination, 0, index);
+        System.arraycopy(arr, index + 1, arrDestination, index, remainingElements);
+        return arrDestination;
+    }
+
+
     private final ActionListener buttonListenerPlayNow = e -> {
         stopPlayNow = 1;
         new SwingWorker() {
         @Override
         protected Object doInBackground() throws Exception {
-            window.setPlayingSongInfo(listaSong[window.getIndex(listaString)].getTitle(), listaSong[0].getAlbum(), listaSong[0].getArtist());
+            window.setPlayingSongInfo(listaSong[window.getIndex(listaString)].getTitle(), listaSong[window.getIndex(listaString)].getAlbum(), listaSong[window.getIndex(listaString)].getArtist());
             currentFrame = 0;
             if(bitstream != null){
                 try {
@@ -82,7 +99,15 @@ public class Player{
     }.execute();
     };
 
-    private final ActionListener buttonListenerRemove = e -> {};
+    private final ActionListener buttonListenerRemove = e -> {
+        int index = window.getIndex(listaString);
+        listaString = removeElement(listaString, index);
+
+        this.window.setQueueList(listaString);
+
+        listaSong = removeElementSong(listaSong, index);
+
+    };
     private final ActionListener buttonListenerAddSong = e -> {
         Song novo;
         try {
