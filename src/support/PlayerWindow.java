@@ -263,10 +263,21 @@ public class PlayerWindow {
     }
 
     /**
+     * Retorna o index na lista do elemento clicado
+     *
+     * @param queueArray
+     * @return Index of selected element of the array
+     */
+    public int getIndex(String[][] queueArray) {
+        return queueList.getSelectedRow();
+    }
+
+    /**
      * Sets the information to be displayed in the queue list. Should be called whenever a song is added or removed.
      *
      * @param queueArray String[][] with the queue. The array should contain in each position one Song converted to array.
      */
+
     public void setQueueList(String[][] queueArray) {
         queueList.setShowHorizontalLines(true);
         queueList.setDragEnabled(false);

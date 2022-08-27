@@ -44,7 +44,7 @@ public class Player{
         new SwingWorker() {
         @Override
         protected Object doInBackground() throws Exception {
-            window.setPlayingSongInfo(listaSong[0].getTitle(), listaSong[0].getAlbum(), listaSong[0].getArtist());
+            window.setPlayingSongInfo(listaSong[window.getIndex(listaString)].getTitle(), listaSong[0].getAlbum(), listaSong[0].getArtist());
             currentFrame = 0;
             if(bitstream != null){
                 try {
@@ -65,7 +65,7 @@ public class Player{
             } catch (JavaLayerException ex) {}
 
             try {
-                bitstream = new Bitstream(listaSong[0].getBufferedInputStream());
+                bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
             } catch (FileNotFoundException ex) {}
 
             stopPlayNow = 0;
@@ -97,17 +97,17 @@ public class Player{
             throw new RuntimeException(ex);
         }
 
-        //fazendo a matriz onde cada posição é uma musica com array dinamic
-        int N = listaString.length;
-        listaString = Arrays.copyOf(listaString, N + 1);
-        listaString[N] = novo.getDisplayInfo();
+        if (novo != null) {//fazendo a matriz onde cada posição é uma musica com array dinamic
+            int N = listaString.length;
+            listaString = Arrays.copyOf(listaString, N + 1);
+            listaString[N] = novo.getDisplayInfo();
 
-        this.window.setQueueList(listaString);
-
-        //"array dinamico"
-        int N2 = listaSong.length;
-        listaSong = Arrays.copyOf(listaSong, N2 + 1);
-        listaSong[N2] = novo;
+            this.window.setQueueList(listaString);
+            //"array dinamico"
+            int N2 = listaSong.length;
+            listaSong = Arrays.copyOf(listaSong, N2 + 1);
+            listaSong[N2] = novo;
+        }
     };
 
     private final ActionListener buttonListenerPlayPause = e -> {};
