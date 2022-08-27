@@ -6,12 +6,16 @@ import javazoom.jl.player.FactoryRegistry;
 import support.PlayerWindow;
 import support.Song;
 
+import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Arrays;
 
-public class Player {
+public class Player{
 
     /**
      * The MPEG audio bitstream.
@@ -29,13 +33,108 @@ public class Player {
     private PlayerWindow window;
 
     //Variavel teste
-    private String[][] listaReproducao = new String[2][2];
+    private String[][] listaString = new String[0][];
+    private Song[] listaSong = new Song[0];
+    int stopPlayNow = 0;
 
     private int currentFrame = 0;
 
-    private final ActionListener buttonListenerPlayNow = e -> {};
-    private final ActionListener buttonListenerRemove = e -> {};
-    private final ActionListener buttonListenerAddSong = e -> {};
+    public static String[][] removeElement( String [][] arr, int index ){
+        String[][] arrDestination = new String[arr.length - 1][];
+        int remainingElements = arr.length - ( index + 1 );
+        System.arraycopy(arr, 0, arrDestination, 0, index);
+        System.arraycopy(arr, index + 1, arrDestination, index, remainingElements);
+        return arrDestination;
+    }
+
+    public static Song[] removeElementSong( Song [] arr, int index ){
+        Song[] arrDestination = new Song[arr.length - 1];
+        int remainingElements = arr.length - ( index + 1 );
+        System.arraycopy(arr, 0, arrDestination, 0, index);
+        System.arraycopy(arr, index + 1, arrDestination, index, remainingElements);
+        return arrDestination;
+    }
+
+
+    private final ActionListener buttonListenerPlayNow = e -> {
+        stopPlayNow = 1;
+        new SwingWorker() {
+        @Override
+        protected Object doInBackground() throws Exception {
+            window.setPlayingSongInfo(listaSong[window.getIndex(listaString)].getTitle(), listaSong[window.getIndex(listaString)].getAlbum(), listaSong[window.getIndex(listaString)].getArtist());
+            currentFrame = 0;
+            if(bitstream != null){
+                try {
+                    bitstream.close();
+                } catch (BitstreamException ex) {
+                    throw new RuntimeException(ex);
+                }
+
+                device.close();
+            }
+
+            try {
+                device = FactoryRegistry.systemRegistry().createAudioDevice();
+            } catch (JavaLayerException ex) {}
+
+            try {
+                device.open(decoder = new Decoder());
+            } catch (JavaLayerException ex) {}
+
+            try {
+                bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
+            } catch (FileNotFoundException ex) {}
+
+            stopPlayNow = 0;
+            while (true) {
+                try {
+                    if(stopPlayNow == 1){
+                        break;
+                    }
+                    playNextFrame();
+                } catch (JavaLayerException ex) {}
+            }
+            return null;
+        }
+    }.execute();
+    };
+
+    private final ActionListener buttonListenerRemove = e -> {
+        int index = window.getIndex(listaString);
+        listaString = removeElement(listaString, index);
+
+        this.window.setQueueList(listaString);
+
+        listaSong = removeElementSong(listaSong, index);
+
+    };
+    private final ActionListener buttonListenerAddSong = e -> {
+        Song novo;
+        try {
+            novo = this.window.openFileChooser();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (BitstreamException ex) {
+            throw new RuntimeException(ex);
+        } catch (UnsupportedTagException ex) {
+            throw new RuntimeException(ex);
+        } catch (InvalidDataException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        if (novo != null) {//fazendo a matriz onde cada posição é uma musica com array dinamic
+            int N = listaString.length;
+            listaString = Arrays.copyOf(listaString, N + 1);
+            listaString[N] = novo.getDisplayInfo();
+
+            this.window.setQueueList(listaString);
+            //"array dinamico"
+            int N2 = listaSong.length;
+            listaSong = Arrays.copyOf(listaSong, N2 + 1);
+            listaSong[N2] = novo;
+        }
+    };
+
     private final ActionListener buttonListenerPlayPause = e -> {};
     private final ActionListener buttonListenerStop = e -> {};
     private final ActionListener buttonListenerNext = e -> {};
@@ -59,7 +158,7 @@ public class Player {
     public Player() {
         EventQueue.invokeLater(() -> window = new PlayerWindow(
                 "Reprodutor",
-                listaReproducao,
+                listaString,
                 buttonListenerPlayNow,
                 buttonListenerRemove,
                 buttonListenerAddSong,
