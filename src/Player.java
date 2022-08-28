@@ -40,6 +40,23 @@ public class Player{
     private int currentFrame = 0;
     private SwingWorker thr;
 
+    public static String[][] removeElement( String [][] arr, int index ){
+        String[][] arrDestination = new String[arr.length - 1][];
+        int remainingElements = arr.length - ( index + 1 );
+        System.arraycopy(arr, 0, arrDestination, 0, index);
+        System.arraycopy(arr, index + 1, arrDestination, index, remainingElements);
+        return arrDestination;
+    }
+
+    public static Song[] removeElementSong( Song [] arr, int index ){
+        Song[] arrDestination = new Song[arr.length - 1];
+        int remainingElements = arr.length - ( index + 1 );
+        System.arraycopy(arr, 0, arrDestination, 0, index);
+        System.arraycopy(arr, index + 1, arrDestination, index, remainingElements);
+        return arrDestination;
+    }
+
+
     private final ActionListener buttonListenerPlayNow = e -> {
         stopPlayNow = 1;
 
@@ -82,12 +99,22 @@ public class Player{
             }
 
             window.resetMiniPlayer();
+            bitstream = null;
             return null;
         }
     };
         thr.execute();
     };
-    private final ActionListener buttonListenerRemove = e -> {};
+
+    private final ActionListener buttonListenerRemove = e -> {
+        int index = window.getIndex(listaString);
+        listaString = removeElement(listaString, index);
+
+        this.window.setQueueList(listaString);
+
+        listaSong = removeElementSong(listaSong, index);
+
+    };
     private final ActionListener buttonListenerAddSong = e -> {
         Song novo;
         try {

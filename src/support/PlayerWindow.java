@@ -272,6 +272,10 @@ public class PlayerWindow {
         return queueList.getSelectedRow();
     }
 
+    public int getIndexSong(Song[] queueArray) {
+        return queueList.getSelectedRow();
+    }
+
     /**
      * Sets the information to be displayed in the queue list. Should be called whenever a song is added or removed.
      *
