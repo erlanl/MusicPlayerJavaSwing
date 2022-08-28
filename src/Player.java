@@ -57,14 +57,26 @@ public class Player{
     }
 
     public void start_window() {
-        window.setPlayPauseButtonIcon(1);
-        window.setEnabledPlayPauseButton(Boolean.TRUE);
-        window.setEnabledLoopButton(Boolean.TRUE);
+        window.setPlayPauseButtonIcon(playPauseState);
+        window.setEnabledPlayPauseButton(true);
+        window.setEnabledLoopButton(false);
         window.setEnabledStopButton(Boolean.TRUE);
-        window.setEnabledPreviousButton(Boolean.TRUE);
-        window.setEnabledNextButton(Boolean.TRUE);
-        window.setEnabledShuffleButton(Boolean.TRUE);
+        window.setEnabledPreviousButton(false);
+        window.setEnabledNextButton(false);
+        window.setEnabledShuffleButton(false);
     };
+
+    public void end_song() {
+        window.setPlayPauseButtonIcon(playPauseState);
+        window.setEnabledPlayPauseButton(false);
+        window.setEnabledLoopButton(false);
+        window.setEnabledStopButton(Boolean.FALSE);
+        window.setEnabledPreviousButton(false);
+        window.setEnabledNextButton(false);
+        window.setEnabledShuffleButton(false);
+        currentFrame = 0;
+        window.resetMiniPlayer();
+    }
 
     private final ActionListener buttonListenerPlayNow = e -> {
 
@@ -100,18 +112,17 @@ public class Player{
                     bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
                 } catch (FileNotFoundException ex) {}
 
-                window.setEnabledPlayPauseButton(true);
-                window.setPlayPauseButtonIcon(playPauseState);
+                start_window();
 
-                while (playNextFrame() && !thr.isCancelled()) {
-                    window.setTime((int) (currentFrame*listaSong[index].getMsPerFrame()) ,(int) (listaSong[index].getNumFrames()*listaSong[index].getMsPerFrame()));
-                    currentFrame++;
+                while (currentFrame != listaSong[index].getNumFrames() && !thr.isCancelled()) {
+                    if(playPauseState == 1){
+                        playNextFrame();
+                        window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
+                        currentFrame++;
+                    }
                 }
 
-                window.setPlayPauseButtonIcon(playPauseState);
-                window.setEnabledPlayPauseButton(false);
-                currentFrame = 0;
-                window.resetMiniPlayer();
+                end_song();
                 return null;
             }
         };
@@ -165,18 +176,10 @@ public class Player{
             case 0 -> playPauseState = 1;
             case 1 -> playPauseState = 0;
         }
-
-        if(playPauseState == 0) {
-
-        }
-
-        else {
-
-        }
+        window.setPlayPauseButtonIcon(playPauseState);
     };
     private final ActionListener buttonListenerStop = e -> {
         thr.cancel(true);
-
     };
     private final ActionListener buttonListenerNext = e -> {};
     private final ActionListener buttonListenerPrevious = e -> {};
