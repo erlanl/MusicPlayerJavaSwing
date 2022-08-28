@@ -35,7 +35,6 @@ public class Player{
     //Variavel teste
     private String[][] listaString = new String[0][];
     private Song[] listaSong = new Song[0];
-    int stopPlayNow = 0;
 
     private int currentFrame = 0;
     private SwingWorker thr;
@@ -58,10 +57,10 @@ public class Player{
 
 
     private final ActionListener buttonListenerPlayNow = e -> {
-        stopPlayNow = 1;
 
-        if(bitstream != null){
+        if(thr != null){
             thr.cancel(true);
+            currentFrame = 0;
         }
 
         thr = new SwingWorker() {
@@ -69,7 +68,6 @@ public class Player{
         protected Object doInBackground() throws Exception {
             int index = window.getIndex(listaString);
             window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
-            currentFrame = 0;
             if(bitstream != null){
                 try {
                     bitstream.close();
@@ -92,14 +90,13 @@ public class Player{
                 bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
             } catch (FileNotFoundException ex) {}
 
-            stopPlayNow = 0;
-            while (currentFrame != listaSong[index].getNumFrames()) {
-                playNextFrame();
+            while (playNextFrame()) {
                 window.setTime((int) (currentFrame*listaSong[index].getMsPerFrame()) ,(int) (listaSong[index].getNumFrames()*listaSong[index].getMsPerFrame()));
+                currentFrame++;
             }
 
+            currentFrame = 0;
             window.resetMiniPlayer();
-            bitstream = null;
             return null;
         }
     };
@@ -193,7 +190,6 @@ public class Player{
             SampleBuffer output = (SampleBuffer) decoder.decodeFrame(h, bitstream);
             device.write(output.getBuffer(), 0, output.getBufferLength());
             bitstream.closeFrame();
-            currentFrame += 1;
         }
         return true;
     }
