@@ -38,13 +38,20 @@ public class Player{
     int stopPlayNow = 0;
 
     private int currentFrame = 0;
+    private SwingWorker thr;
 
     private final ActionListener buttonListenerPlayNow = e -> {
         stopPlayNow = 1;
-        new SwingWorker() {
+
+        if(bitstream != null){
+            thr.cancel(true);
+        }
+
+        thr = new SwingWorker() {
         @Override
         protected Object doInBackground() throws Exception {
-            window.setPlayingSongInfo(listaSong[window.getIndex(listaString)].getTitle(), listaSong[0].getAlbum(), listaSong[0].getArtist());
+            int index = window.getIndex(listaString);
+            window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
             currentFrame = 0;
             if(bitstream != null){
                 try {
@@ -69,19 +76,17 @@ public class Player{
             } catch (FileNotFoundException ex) {}
 
             stopPlayNow = 0;
-            while (true) {
-                try {
-                    if(stopPlayNow == 1){
-                        break;
-                    }
-                    playNextFrame();
-                } catch (JavaLayerException ex) {}
+            while (currentFrame != listaSong[index].getNumFrames()) {
+                playNextFrame();
+                window.setTime((int) (currentFrame*listaSong[index].getMsPerFrame()) ,(int) (listaSong[index].getNumFrames()*listaSong[index].getMsPerFrame()));
             }
+
+            window.resetMiniPlayer();
             return null;
         }
-    }.execute();
     };
-
+        thr.execute();
+    };
     private final ActionListener buttonListenerRemove = e -> {};
     private final ActionListener buttonListenerAddSong = e -> {
         Song novo;
@@ -161,6 +166,7 @@ public class Player{
             SampleBuffer output = (SampleBuffer) decoder.decodeFrame(h, bitstream);
             device.write(output.getBuffer(), 0, output.getBufferLength());
             bitstream.closeFrame();
+            currentFrame += 1;
         }
         return true;
     }
