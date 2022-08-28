@@ -35,9 +35,9 @@ public class Player{
     //Variavel teste
     private String[][] listaString = new String[0][];
     private Song[] listaSong = new Song[0];
-
     private int currentFrame = 0;
     private SwingWorker thr;
+
 
     public static String[][] removeElement( String [][] arr, int index ){
         String[][] arrDestination = new String[arr.length - 1][];
@@ -55,56 +55,73 @@ public class Player{
         return arrDestination;
     }
 
+    public void start_window() {
+        window.setPlayPauseButtonIcon(1);
+        window.setEnabledPlayPauseButton(Boolean.TRUE);
+        window.setEnabledLoopButton(Boolean.TRUE);
+        window.setEnabledStopButton(Boolean.TRUE);
+        window.setEnabledPreviousButton(Boolean.TRUE);
+        window.setEnabledNextButton(Boolean.TRUE);
+        window.setEnabledShuffleButton(Boolean.TRUE);
+    };
 
     private final ActionListener buttonListenerPlayNow = e -> {
 
-        if(thr != null){
+        if(bitstream != null){
             thr.cancel(true);
-            currentFrame = 0;
         }
 
         thr = new SwingWorker() {
-        @Override
-        protected Object doInBackground() throws Exception {
-            int index = window.getIndex(listaString);
-            window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
-            if(bitstream != null){
-                try {
-                    bitstream.close();
-                } catch (BitstreamException ex) {
-                    throw new RuntimeException(ex);
+            @Override
+            protected Object doInBackground() throws Exception {
+                int index = window.getIndex(listaString);
+                window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
+                start_window();
+
+                currentFrame = 0;
+                if(bitstream != null){
+                    try {
+                        bitstream.close();
+                    } catch (BitstreamException ex) {
+                        throw new RuntimeException(ex);
+                    }
+
+                    device.close();
                 }
 
-                device.close();
+                try {
+                    device = FactoryRegistry.systemRegistry().createAudioDevice();
+                } catch (JavaLayerException ex) {}
+
+                try {
+                    device.open(decoder = new Decoder());
+                } catch (JavaLayerException ex) {}
+
+                try {
+                    bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
+                } catch (FileNotFoundException ex) {}
+
+                while (currentFrame != listaSong[index].getNumFrames()) {
+                    playNextFrame();
+                    window.setTime((int) (currentFrame*listaSong[index].getMsPerFrame()) ,(int) (listaSong[index].getNumFrames()*listaSong[index].getMsPerFrame()));
+                }
+
+                window.resetMiniPlayer();
+                bitstream = null;
+                return null;
             }
-
-            try {
-                device = FactoryRegistry.systemRegistry().createAudioDevice();
-            } catch (JavaLayerException ex) {}
-
-            try {
-                device.open(decoder = new Decoder());
-            } catch (JavaLayerException ex) {}
-
-            try {
-                bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
-            } catch (FileNotFoundException ex) {}
-
-            while (playNextFrame()) {
-                window.setTime((int) (currentFrame*listaSong[index].getMsPerFrame()) ,(int) (listaSong[index].getNumFrames()*listaSong[index].getMsPerFrame()));
-                currentFrame++;
-            }
-
-            currentFrame = 0;
-            window.resetMiniPlayer();
-            return null;
-        }
     };
         thr.execute();
     };
 
     private final ActionListener buttonListenerRemove = e -> {
+
+        thr.cancel(true);
+
+        window.resetMiniPlayer();
+
         int index = window.getIndex(listaString);
+
         listaString = removeElement(listaString, index);
 
         this.window.setQueueList(listaString);
@@ -139,8 +156,15 @@ public class Player{
         }
     };
 
-    private final ActionListener buttonListenerPlayPause = e -> {};
-    private final ActionListener buttonListenerStop = e -> {};
+    private final ActionListener buttonListenerPlayPause = e -> {
+    };
+    private final ActionListener buttonListenerStop = e -> {
+        thr.cancel(true);
+        window.resetMiniPlayer();
+        window.setPlayPauseButtonIcon(0);
+        window.setEnabledPlayPauseButton(Boolean.FALSE);
+
+    };
     private final ActionListener buttonListenerNext = e -> {};
     private final ActionListener buttonListenerPrevious = e -> {};
     private final ActionListener buttonListenerShuffle = e -> {};
@@ -190,6 +214,7 @@ public class Player{
             SampleBuffer output = (SampleBuffer) decoder.decodeFrame(h, bitstream);
             device.write(output.getBuffer(), 0, output.getBufferLength());
             bitstream.closeFrame();
+            currentFrame += 1;
         }
         return true;
     }
