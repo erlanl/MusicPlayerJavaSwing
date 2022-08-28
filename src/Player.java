@@ -37,6 +37,7 @@ public class Player{
     private Song[] listaSong = new Song[0];
     private int currentFrame = 0;
     private SwingWorker thr;
+    private int playPauseState = 1;
 
 
     public static String[][] removeElement( String [][] arr, int index ){
@@ -67,8 +68,9 @@ public class Player{
 
     private final ActionListener buttonListenerPlayNow = e -> {
 
-        if(bitstream != null){
+        if(thr != null){
             thr.cancel(true);
+            currentFrame = 0;
         }
 
         thr = new SwingWorker() {
@@ -76,9 +78,6 @@ public class Player{
             protected Object doInBackground() throws Exception {
                 int index = window.getIndex(listaString);
                 window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
-                start_window();
-
-                currentFrame = 0;
                 if(bitstream != null){
                     try {
                         bitstream.close();
@@ -101,16 +100,21 @@ public class Player{
                     bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
                 } catch (FileNotFoundException ex) {}
 
-                while (currentFrame != listaSong[index].getNumFrames()) {
-                    playNextFrame();
+                window.setEnabledPlayPauseButton(true);
+                window.setPlayPauseButtonIcon(playPauseState);
+
+                while (playNextFrame() && !thr.isCancelled()) {
                     window.setTime((int) (currentFrame*listaSong[index].getMsPerFrame()) ,(int) (listaSong[index].getNumFrames()*listaSong[index].getMsPerFrame()));
+                    currentFrame++;
                 }
 
+                window.setPlayPauseButtonIcon(playPauseState);
+                window.setEnabledPlayPauseButton(false);
+                currentFrame = 0;
                 window.resetMiniPlayer();
-                bitstream = null;
                 return null;
             }
-    };
+        };
         thr.execute();
     };
 
@@ -157,12 +161,21 @@ public class Player{
     };
 
     private final ActionListener buttonListenerPlayPause = e -> {
+        switch (playPauseState){
+            case 0 -> playPauseState = 1;
+            case 1 -> playPauseState = 0;
+        }
+
+        if(playPauseState == 0) {
+
+        }
+
+        else {
+
+        }
     };
     private final ActionListener buttonListenerStop = e -> {
         thr.cancel(true);
-        window.resetMiniPlayer();
-        window.setPlayPauseButtonIcon(0);
-        window.setEnabledPlayPauseButton(Boolean.FALSE);
 
     };
     private final ActionListener buttonListenerNext = e -> {};
