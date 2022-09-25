@@ -265,14 +265,10 @@ public class PlayerWindow {
     /**
      * Retorna o index na lista do elemento clicado
      *
-     * @param queueArray
+     * @param queueArray lista onde esta o elemento que o usuario clicou
      * @return Index of selected element of the array
      */
     public int getIndex(String[][] queueArray) {
-        return queueList.getSelectedRow();
-    }
-
-    public int getIndexSong(Song[] queueArray) {
         return queueList.getSelectedRow();
     }
 
