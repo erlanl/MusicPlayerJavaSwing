@@ -99,8 +99,10 @@ public class Player{
             window.setEnabledNextButton(false);
         }
         else {
-            window.setEnabledShuffleButton(false);
+            window.setEnabledNextButton(true);
         }
+        //window.setEnabledScrubber(true);
+        window.setEnabledShuffleButton(false);
         currentFrame = 0;
     };
 
@@ -136,7 +138,7 @@ public class Player{
                 index = window.getIndex(listaString);
 
                 //Loop para tocar todas as musicas da lista
-                while (index != listaString.length - 1 && !thr.isCancelled()) {
+                while (index != listaString.length && !thr.isCancelled()) {
                     //Desenhando na tela as informacoes armazenadas em listaString sobre a musica
                     window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
 
@@ -172,7 +174,7 @@ public class Player{
                     start_window(index, listaSong);
 
                     //Loop para tocar a musica, ira terminar caso a musica termine ou caso tentem terminar a thread e nao consigam
-                    while (currentFrame != listaSong[index].getNumFrames() && !thr.isCancelled()) {
+                    while (currentFrame < listaSong[index].getNumFrames() && !thr.isCancelled()) {
                         //Caso a musica esteja no estado de play
                         if (playPauseState == 1) {
                             //Tocando o proximo frame
