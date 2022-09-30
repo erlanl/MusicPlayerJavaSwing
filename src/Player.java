@@ -82,14 +82,26 @@ public class Player{
     /**
      * Configura os botoes na tela quando apertamos 'play now'
      */
-    public void start_window() {
+    public void start_window(int indexNumber, Song [] lista) {
         window.setPlayPauseButtonIcon(playPauseState);
         window.setEnabledPlayPauseButton(true);
         window.setEnabledLoopButton(false);
         window.setEnabledStopButton(Boolean.TRUE);
-        window.setEnabledPreviousButton(false);
-        window.setEnabledNextButton(false);
-        window.setEnabledShuffleButton(false);
+
+        if (indexNumber == 0) {
+            window.setEnabledPreviousButton(false);
+        }
+        else {
+            window.setEnabledPreviousButton(true);
+        }
+
+        if(indexNumber == lista.length - 1) {
+            window.setEnabledNextButton(false);
+        }
+        else {
+            window.setEnabledShuffleButton(false);
+        }
+        currentFrame = 0;
     };
 
     /**
@@ -103,7 +115,6 @@ public class Player{
         window.setEnabledPreviousButton(false);
         window.setEnabledNextButton(false);
         window.setEnabledShuffleButton(false);
-        currentFrame = 0;
         window.resetMiniPlayer();
     }
 
@@ -123,47 +134,57 @@ public class Player{
             protected Object doInBackground() throws Exception {
                 //Pegando a posicao(indice) da musica na listaStrin, que eh a mesma posicao na listaSong
                 index = window.getIndex(listaString);
-                //Desenhando na tela as informacoes armazenadas em listaString sobre a musica
-                window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
 
-                //Caso o bittstream esteja armazenando algo
-                if(bitstream != null){
-                    //Fechando o bitstream antigo
+                //Loop para tocar todas as musicas da lista
+                while (index != listaString.length - 1 && !thr.isCancelled()) {
+                    //Desenhando na tela as informacoes armazenadas em listaString sobre a musica
+                    window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
+
+                    //Caso o bittstream esteja armazenando algo
+                    if (bitstream != null) {
+                        //Fechando o bitstream antigo
+                        try {
+                            bitstream.close();
+                        } catch (BitstreamException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        //Fechando o device antigo
+                        device.close();
+                    }
+
+                    //Armazenando novos Audio Device, Decoder e Bitstream nessas variaveis
                     try {
-                        bitstream.close();
-                    } catch (BitstreamException ex) {
-                        throw new RuntimeException(ex);
+                        device = FactoryRegistry.systemRegistry().createAudioDevice();
+                    } catch (JavaLayerException ex) {
                     }
-                    //Fechando o device antigo
-                    device.close();
-                }
 
-                //Armazenando novos Audio Device, Decoder e Bitstream nessas variaveis
-                try {
-                    device = FactoryRegistry.systemRegistry().createAudioDevice();
-                } catch (JavaLayerException ex) {}
-
-                try {
-                    device.open(decoder = new Decoder());
-                } catch (JavaLayerException ex) {}
-
-                try {
-                    bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
-                } catch (FileNotFoundException ex) {}
-
-                //Configurando os botaos
-                start_window();
-
-                //Loop para tocar a musica, ira terminar caso a musica termine ou caso tentem terminar a thread e nao consigam
-                while (currentFrame != listaSong[index].getNumFrames() && !thr.isCancelled()) {
-                    //Caso a musica esteja no estado de play
-                    if(playPauseState == 1){
-                        //Tocando o proximo frame
-                        playNextFrame();
-                        //Calculando o tempo em que a musica esta e pondo na tela
-                        window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
-                        currentFrame++;
+                    try {
+                        device.open(decoder = new Decoder());
+                    } catch (JavaLayerException ex) {
                     }
+
+                    try {
+                        bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
+                    } catch (FileNotFoundException ex) {
+                    }
+
+                    //Configurando os botaos
+                    start_window(index, listaSong);
+
+                    //Loop para tocar a musica, ira terminar caso a musica termine ou caso tentem terminar a thread e nao consigam
+                    while (currentFrame != listaSong[index].getNumFrames() && !thr.isCancelled()) {
+                        //Caso a musica esteja no estado de play
+                        if (playPauseState == 1) {
+                            //Tocando o proximo frame
+                            playNextFrame();
+                            //Calculando o tempo em que a musica esta e pondo na tela
+                            window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
+                            currentFrame++;
+                        }
+                    }
+
+                    //Incrementando index para tocar a proxima musica
+                    index++;
                 }
                 //Configurando os botoes
                 end_song();
@@ -184,10 +205,8 @@ public class Player{
         //Caso a musica a ser removida esteja sendo tocada
         if(index == indexRemovido) {
             //A linha abaixo eh para que o comando !thr.isCancelled() na linha 158 retorne false e o loop que toca
-            // a musica seja interrompido, terminando a thread
-            thr.cancel(true);
-            //Resetando a tela para o estado inicial
-            window.resetMiniPlayer();
+            // a musica seja interrompido e a proxima sera tocada
+            currentFrame = listaSong[index].getNumFrames();
         }
 
         //Removendo as informacoes da musica escolhida da listaString e da tela
@@ -255,8 +274,13 @@ public class Player{
         // a musica seja interrompido, terminando a thread
         thr.cancel(true);
     };
-    private final ActionListener buttonListenerNext = e -> {};
-    private final ActionListener buttonListenerPrevious = e -> {};
+    private final ActionListener buttonListenerNext = e -> {
+        currentFrame = listaSong[index].getNumFrames();
+    };
+    private final ActionListener buttonListenerPrevious = e -> {
+        currentFrame = listaSong[index].getNumFrames();
+        index -= 2;
+    };
     private final ActionListener buttonListenerShuffle = e -> {};
     private final ActionListener buttonListenerLoop = e -> {};
     private final MouseInputAdapter scrubberMouseInputAdapter = new MouseInputAdapter() {
