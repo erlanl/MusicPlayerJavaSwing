@@ -44,6 +44,7 @@ public class Player{
     //1 = play e 0 = pause
     private int playPauseState = 1;
     private int index;
+    private boolean boolPrevious = false;
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -103,6 +104,7 @@ public class Player{
         }
         //window.setEnabledScrubber(true);
         window.setEnabledShuffleButton(false);
+        window.setEnabledScrubber(true);
         currentFrame = 0;
     };
 
@@ -117,6 +119,7 @@ public class Player{
         window.setEnabledPreviousButton(false);
         window.setEnabledNextButton(false);
         window.setEnabledShuffleButton(false);
+        window.setEnabledScrubber(false);
         window.resetMiniPlayer();
     }
 
@@ -134,7 +137,7 @@ public class Player{
         thr = new SwingWorker() {
             @Override
             protected Object doInBackground() throws Exception {
-                //Pegando a posicao(indice) da musica na listaStrin, que eh a mesma posicao na listaSong
+                //Pegando a posicao(indice) da musica na listaString, que eh a mesma posicao na listaSong
                 index = window.getIndex(listaString);
 
                 //Loop para tocar todas as musicas da lista
@@ -166,7 +169,7 @@ public class Player{
                     }
 
                     try {
-                        bitstream = new Bitstream(listaSong[window.getIndex(listaString)].getBufferedInputStream());
+                        bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
                     } catch (FileNotFoundException ex) {
                     }
 
@@ -185,8 +188,14 @@ public class Player{
                         }
                     }
 
-                    //Incrementando index para tocar a proxima musica
-                    index++;
+                    if (boolPrevious) {
+                        index--;
+                        boolPrevious = false;
+                    }
+                    else {
+                        //Incrementando index para tocar a proxima musica
+                        index++;
+                    }
                 }
                 //Configurando os botoes
                 end_song();
@@ -280,8 +289,8 @@ public class Player{
         currentFrame = listaSong[index].getNumFrames();
     };
     private final ActionListener buttonListenerPrevious = e -> {
+        boolPrevious = true;
         currentFrame = listaSong[index].getNumFrames();
-        index -= 2;
     };
     private final ActionListener buttonListenerShuffle = e -> {};
     private final ActionListener buttonListenerLoop = e -> {};
