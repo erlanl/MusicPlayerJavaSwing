@@ -45,7 +45,6 @@ public class Player{
     private int playPauseState = 1;
     private int index;
     private boolean boolPrevious = false;
-    private boolean skipFrame = false;
     private int frameToSkip = -1;
 
     /**
@@ -308,10 +307,12 @@ public class Player{
 
         @Override
         public void mousePressed(MouseEvent e) {
+            frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
+            frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
     };
 
@@ -376,9 +377,35 @@ public class Player{
             while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
         }
 
-        /*else if(newFrame < currentFrame) {
-        **
-        }*/
+        else if(newFrame < currentFrame) {
+            try {
+                bitstream.close();
+            } catch (BitstreamException ex) {
+                throw new RuntimeException(ex);
+            }
+            //Fechando o device antigo
+            device.close();
+            //Armazenando novos Audio Device, Decoder e Bitstream nessas variaveis
+            try {
+                device = FactoryRegistry.systemRegistry().createAudioDevice();
+            } catch (JavaLayerException ex) {
+            }
+
+            try {
+                device.open(decoder = new Decoder());
+            } catch (JavaLayerException ex) {
+            }
+
+            try {
+                bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
+            } catch (FileNotFoundException ex) {
+            }
+
+            currentFrame = 0;
+            int framesToSkip = newFrame - currentFrame;
+            boolean condition = true;
+            while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
+        }
     }
     //</editor-fold>
 }
