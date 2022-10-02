@@ -45,6 +45,8 @@ public class Player{
     private int playPauseState = 1;
     private int index;
     private boolean boolPrevious = false;
+    private boolean skipFrame = false;
+    private int frameToSkip = -1;
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -186,6 +188,10 @@ public class Player{
                             window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
                             currentFrame++;
                         }
+                        if(frameToSkip != -1) {
+                            skipToFrame(frameToSkip);
+                            frameToSkip = -1;
+                        }
                     }
 
                     if (boolPrevious) {
@@ -196,9 +202,9 @@ public class Player{
                         //Incrementando index para tocar a proxima musica
                         index++;
                     }
+                    //Configurando os botoes
+                    end_song();
                 }
-                //Configurando os botoes
-                end_song();
                 return null;
             }
         };
@@ -297,6 +303,7 @@ public class Player{
     private final MouseInputAdapter scrubberMouseInputAdapter = new MouseInputAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
+            frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
 
         @Override
@@ -368,6 +375,10 @@ public class Player{
             boolean condition = true;
             while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
         }
+
+        /*else if(newFrame < currentFrame) {
+        **
+        }*/
     }
     //</editor-fold>
 }
