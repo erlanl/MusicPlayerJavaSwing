@@ -302,7 +302,6 @@ public class Player{
     private final MouseInputAdapter scrubberMouseInputAdapter = new MouseInputAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
-            frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
 
         @Override
