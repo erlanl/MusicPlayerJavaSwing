@@ -393,13 +393,8 @@ public class Player{
      */
     private void skipToFrame(int newFrame) throws BitstreamException {
         // TODO Is this thread safe?
-        if (newFrame > currentFrame) {
-            int framesToSkip = newFrame - currentFrame;
-            boolean condition = true;
-            while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
-        }
         //Caso queiramos pular para um frame anterior da musica
-        else if(newFrame < currentFrame) {
+        if(newFrame < currentFrame) {
             //Fechando bitstream e device
             try {
                 bitstream.close();
@@ -428,10 +423,10 @@ public class Player{
             
             //Resetando o valor de currentFrame
             currentFrame = 0;
-            int framesToSkip = newFrame - currentFrame;
-            boolean condition = true;
-            while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
         }
+        int framesToSkip = newFrame - currentFrame;
+        boolean condition = true;
+        while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
     }
     //</editor-fold>
 }
