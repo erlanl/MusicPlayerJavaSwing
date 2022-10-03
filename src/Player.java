@@ -43,8 +43,11 @@ public class Player{
     //Variavel para dizer se a musica esta pausada
     //1 = play e 0 = pause
     private int playPauseState = 1;
+    //Index da musica atual
     private int index;
+    //Confirmação se o botão de Previous foi pressionado
     private boolean boolPrevious = false;
+    //Frame sobre o qual vamos pular
     private int frameToSkip = -1;
 
     /**
@@ -187,23 +190,31 @@ public class Player{
                             window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
                             currentFrame++;
                         }
+
+                        //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
                         if(frameToSkip != -1) {
                             skipToFrame(frameToSkip);
+                            //resetando o estado do frameToSkip
                             frameToSkip = -1;
                         }
                     }
 
+                    //Se o botão de Previous foi pressionado
                     if (boolPrevious) {
+                        //decrementamos index, voltando uma musica
                         index--;
+                        //resetando estado da variável booleana
                         boolPrevious = false;
-                    }
-                    else {
+                    } else {
                         //Incrementando index para tocar a proxima musica
                         index++;
                     }
-                    //Configurando os botoes
+
+                    //Configurando os botoes ("window reset")
                     end_song();
                 }
+                //Configurando os botoes ("window reset")
+                end_song();
                 return null;
             }
         };
@@ -290,15 +301,25 @@ public class Player{
         // a musica seja interrompido, terminando a thread
         thr.cancel(true);
     };
+    /**
+     * Função principal do botao 'Next'
+     */
     private final ActionListener buttonListenerNext = e -> {
+        //Mudando currentFrame para sair do loop da musica atual e passarmos para a proxima
         currentFrame = listaSong[index].getNumFrames();
     };
+    /**
+     * Função principal do botao 'Previous'
+     */
     private final ActionListener buttonListenerPrevious = e -> {
         boolPrevious = true;
         currentFrame = listaSong[index].getNumFrames();
     };
     private final ActionListener buttonListenerShuffle = e -> {};
     private final ActionListener buttonListenerLoop = e -> {};
+    /**
+     * Função principal das interacoes com o 'Scrubber'
+     */
     private final MouseInputAdapter scrubberMouseInputAdapter = new MouseInputAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -306,11 +327,13 @@ public class Player{
 
         @Override
         public void mousePressed(MouseEvent e) {
+            //Armazendo o frame para qual vamos pular no curso da musica
             frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
+            //Armazendo o frame para qual vamos pular no curso da musica
             frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
     };
@@ -375,15 +398,18 @@ public class Player{
             boolean condition = true;
             while (framesToSkip-- > 0 && condition) condition = skipNextFrame();
         }
-
+        //Caso queiramos pular para um frame anterior da musica
         else if(newFrame < currentFrame) {
+            //Fechando bitstream e device
             try {
                 bitstream.close();
             } catch (BitstreamException ex) {
                 throw new RuntimeException(ex);
             }
+
             //Fechando o device antigo
             device.close();
+
             //Armazenando novos Audio Device, Decoder e Bitstream nessas variaveis
             try {
                 device = FactoryRegistry.systemRegistry().createAudioDevice();
@@ -399,7 +425,8 @@ public class Player{
                 bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
             } catch (FileNotFoundException ex) {
             }
-
+            
+            //Resetando o valor de currentFrame
             currentFrame = 0;
             int framesToSkip = newFrame - currentFrame;
             boolean condition = true;
