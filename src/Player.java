@@ -45,8 +45,8 @@ public class Player{
     private int playPauseState = 1;
     //Index da musica atual
     private int index;
-    //Confirmação se o botão de Previous foi pressionado
-    private boolean boolPrevious = false;
+    //Variavel para saber se havera mudanca na variavel index e qual mudanca sera
+    private int indexChange = 1;
     //Frame sobre o qual vamos pular
     private int frameToSkip = -1;
 
@@ -145,7 +145,7 @@ public class Player{
                 index = window.getIndex(listaString);
 
                 //Loop para tocar todas as musicas da lista
-                while (index != listaString.length && !thr.isCancelled()) {
+                while (index < listaString.length && !thr.isCancelled()) {
                     //Desenhando na tela as informacoes armazenadas em listaString sobre a musica
                     window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
 
@@ -200,14 +200,16 @@ public class Player{
                     }
 
                     //Se o botão de Previous foi pressionado
-                    if (boolPrevious) {
+                    if (indexChange == 0) {
                         //decrementamos index, voltando uma musica
                         index--;
                         //resetando estado da variável booleana
-                        boolPrevious = false;
-                    } else {
+                        indexChange = 1;
+                    } else if (indexChange == 1){
                         //Incrementando index para tocar a proxima musica
                         index++;
+                    } else {
+                        indexChange = 1;
                     }
 
                     //Configurando os botoes ("window reset")
@@ -233,7 +235,24 @@ public class Player{
         if(index == indexRemovido) {
             //A linha abaixo eh para que o comando !thr.isCancelled() na linha 158 retorne false e o loop que toca
             // a musica seja interrompido e a proxima sera tocada
+            indexChange = 2;
             currentFrame = listaSong[index].getNumFrames();
+        }
+        else if(index > indexRemovido) {
+            index--;
+            if (index == 0) {
+                window.setEnabledPreviousButton(false);
+            }
+            else {
+                window.setEnabledPreviousButton(true);
+            }
+
+            if(index == listaSong.length - 2) {
+                window.setEnabledNextButton(false);
+            }
+            else {
+                window.setEnabledNextButton(true);
+            }
         }
 
         //Removendo as informacoes da musica escolhida da listaString e da tela
@@ -312,7 +331,7 @@ public class Player{
      * Função principal do botao 'Previous'
      */
     private final ActionListener buttonListenerPrevious = e -> {
-        boolPrevious = true;
+        indexChange = 0;
         currentFrame = listaSong[index].getNumFrames();
     };
     private final ActionListener buttonListenerShuffle = e -> {};
