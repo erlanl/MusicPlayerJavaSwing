@@ -148,6 +148,8 @@ public class Player{
                 while (index < listaString.length && !thr.isCancelled()) {
                     //Desenhando na tela as informacoes armazenadas em listaString sobre a musica
                     window.setPlayingSongInfo(listaSong[index].getTitle(), listaSong[index].getAlbum(), listaSong[index].getArtist());
+                    //Resetando o estado do playPause
+                    playPauseState = 1;
 
                     //Caso o bittstream esteja armazenando algo
                     if (bitstream != null) {
@@ -191,6 +193,15 @@ public class Player{
                             currentFrame++;
                         }
 
+                        //Caso estejamos tocando a ultima musica da lista
+                        if(index == listaSong.length - 1) {
+                            window.setEnabledNextButton(false);
+                        }
+                        //Caso não estejamos tocando a ultima musica da lista
+                        else {
+                            window.setEnabledNextButton(true);
+                        }
+
                         //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
                         if(frameToSkip != -1) {
                             skipToFrame(frameToSkip);
@@ -205,13 +216,12 @@ public class Player{
                         index--;
                         //resetando estado da variável booleana
                         indexChange = 1;
-                    } 
+                    }
                     //Caso precise ir para a proxima musica
                     else if (indexChange == 1){
                         //Incrementando index para tocar a proxima musica
                         index++;
-                       
-                    } 
+                    }
                     //Caso tenhamos removido a musica que esta tocando atualmente
                     else {
                         indexChange = 1;
@@ -242,12 +252,14 @@ public class Player{
             indexChange = 2;
             //Saindo do loop que esta tocando a musica atual
             currentFrame = listaSong[index].getNumFrames();
+            //Reconfigurando os botões
+            end_song();
         }
         //Caso a musica a ser removida esteja antes da musica que esta sendo tocada
         else if(index > indexRemovido) {
             //Decrementamos o index para poder continuar tocando a mesma musica
             index--;
-            
+
             //Reconfigurando os botoes Previous e Next caso necessario
             //Caso estejamos tocando a primeira musica da lista
             if (index == 0) {
@@ -257,7 +269,7 @@ public class Player{
             else {
                 window.setEnabledPreviousButton(true);
             }
-            
+
             //Caso estejamos tocando a ultima musica da lista
             if(index == listaSong.length - 2) {
                 window.setEnabledNextButton(false);
@@ -274,7 +286,6 @@ public class Player{
 
         //Removendo os dados da musica escolhida da listaSong
         listaSong = removeElementSong(listaSong, indexRemovido);
-
     };
 
     /**
@@ -452,7 +463,7 @@ public class Player{
                 bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
             } catch (FileNotFoundException ex) {
             }
-            
+
             //Resetando o valor de currentFrame
             currentFrame = 0;
         }
