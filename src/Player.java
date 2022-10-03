@@ -205,10 +205,15 @@ public class Player{
                         index--;
                         //resetando estado da variável booleana
                         indexChange = 1;
-                    } else if (indexChange == 1){
+                    } 
+                    //Caso precise ir para a proxima musica
+                    else if (indexChange == 1){
                         //Incrementando index para tocar a proxima musica
                         index++;
-                    } else {
+                       
+                    } 
+                    //Caso tenhamos removido a musica que esta tocando atualmente
+                    else {
                         indexChange = 1;
                     }
 
@@ -233,23 +238,31 @@ public class Player{
 
         //Caso a musica a ser removida esteja sendo tocada
         if(index == indexRemovido) {
-            //A linha abaixo eh para que o comando !thr.isCancelled() na linha 158 retorne false e o loop que toca
-            // a musica seja interrompido e a proxima sera tocada
+            //Mantendo o index anterior inalterado
             indexChange = 2;
+            //Saindo do loop que esta tocando a musica atual
             currentFrame = listaSong[index].getNumFrames();
         }
+        //Caso a musica a ser removida esteja antes da musica que esta sendo tocada
         else if(index > indexRemovido) {
+            //Decrementamos o index para poder continuar tocando a mesma musica
             index--;
+            
+            //Reconfigurando os botoes Previous e Next caso necessario
+            //Caso estejamos tocando a primeira musica da lista
             if (index == 0) {
                 window.setEnabledPreviousButton(false);
             }
+            //Caso não estejamos tocando a primeira musica da lista
             else {
                 window.setEnabledPreviousButton(true);
             }
-
+            
+            //Caso estejamos tocando a ultima musica da lista
             if(index == listaSong.length - 2) {
                 window.setEnabledNextButton(false);
             }
+            //Caso não estejamos tocando a ultima musica da lista
             else {
                 window.setEnabledNextButton(true);
             }
