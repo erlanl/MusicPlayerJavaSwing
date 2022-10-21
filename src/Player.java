@@ -49,6 +49,7 @@ public class Player{
     private int indexChange = 1;
     //Frame sobre o qual vamos pular
     private int frameToSkip = -1;
+    private boolean loop = false;
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -90,7 +91,7 @@ public class Player{
     public void start_window(int indexNumber, Song [] lista) {
         window.setPlayPauseButtonIcon(playPauseState);
         window.setEnabledPlayPauseButton(true);
-        window.setEnabledLoopButton(false);
+        window.setEnabledLoopButton(true);
         window.setEnabledStopButton(Boolean.TRUE);
 
         if (indexNumber == 0) {
@@ -227,6 +228,10 @@ public class Player{
                         indexChange = 1;
                     }
 
+                    if(loop && index == listaSong.length) {
+                        index = 0;
+                    }
+
                     //Configurando os botoes ("window reset")
                     end_song();
                 }
@@ -359,7 +364,9 @@ public class Player{
         currentFrame = listaSong[index].getNumFrames();
     };
     private final ActionListener buttonListenerShuffle = e -> {};
-    private final ActionListener buttonListenerLoop = e -> {};
+    private final ActionListener buttonListenerLoop = e -> {
+        loop = !loop;
+    };
     /**
      * Função principal das interacoes com o 'Scrubber'
      */
