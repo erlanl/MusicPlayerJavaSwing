@@ -49,7 +49,10 @@ public class Player{
     private int indexChange = 1;
     //Frame sobre o qual vamos pular
     private int frameToSkip = -1;
-    private boolean loop = false;
+
+    private boolean estado_loop = false;
+
+    private boolean estado_shuffle = false;
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -194,13 +197,26 @@ public class Player{
                             currentFrame++;
                         }
 
+                        //Botão Shuffle habilitado com duas ou mais músicas
+                        if (listaString.length >= 2){
+                            window.setEnabledShuffleButton(true);
+                        }
+
                         //Caso estejamos tocando a ultima musica da lista
                         if(index == listaSong.length - 1) {
-                            window.setEnabledNextButton(false);
+                            if (!estado_loop){
+                                window.setEnabledNextButton(false);
+                            } else {
+                                index = 0;
+                            }
                         }
                         //Caso não estejamos tocando a ultima musica da lista
                         else {
-                            window.setEnabledNextButton(true);
+                            if (estado_loop && index != listaSong.length - 1){
+                                index++;
+                            } else {
+                                window.setEnabledNextButton(true);
+                            }
                         }
 
                         //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
@@ -209,6 +225,7 @@ public class Player{
                             //resetando o estado do frameToSkip
                             frameToSkip = -1;
                         }
+
                     }
 
                     //Se o botão de Previous foi pressionado
@@ -220,20 +237,22 @@ public class Player{
                     }
                     //Caso precise ir para a proxima musica
                     else if (indexChange == 1){
-                        //Incrementando index para tocar a proxima musica
-                        index++;
+                        //Incrementando index para tocar a proxima musica, se estiver tocando a ultima musica e o estado de loop estiver ligado index não é somado
+                        if (estado_loop && index == listaSong.length - 1){
+                            continue;
+                        } else {
+                            index++;
+                        }
                     }
                     //Caso tenhamos removido a musica que esta tocando atualmente
                     else {
                         indexChange = 1;
                     }
 
-                    if(loop && index == listaSong.length) {
-                        index = 0;
-                    }
-
                     //Configurando os botoes ("window reset")
+                    //if (estado_loop == false){
                     end_song();
+                    //}
                 }
                 //Configurando os botoes ("window reset")
                 end_song();
@@ -363,9 +382,11 @@ public class Player{
         indexChange = 0;
         currentFrame = listaSong[index].getNumFrames();
     };
-    private final ActionListener buttonListenerShuffle = e -> {};
+    private final ActionListener buttonListenerShuffle = e -> {
+        estado_shuffle = true;
+    };
     private final ActionListener buttonListenerLoop = e -> {
-        loop = !loop;
+        estado_loop = true;
     };
     /**
      * Função principal das interacoes com o 'Scrubber'
