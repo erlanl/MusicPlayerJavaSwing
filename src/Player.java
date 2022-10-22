@@ -13,7 +13,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class Player{
 
@@ -49,10 +52,17 @@ public class Player{
     private int indexChange = 1;
     //Frame sobre o qual vamos pular
     private int frameToSkip = -1;
+    //Variável que contém o estado do botão de 'Loop'
+    private boolean loop = false;
+    //Variável que contém o estado do botão de 'Shuffle'
+    private boolean shuffle = false;
+    //Array reserva com as informacoes de cada musica que serao mostradas na tela ao tocar a musica
+    private String[][] listaStringReserva;
+    //Array reserva que vai guardar as musicas
+    private Song[] listaSongReserva;
+    //Array com os indexs aleatórios
+    private Integer[] listaIndex;
 
-    private boolean estado_loop = false;
-
-    private boolean estado_shuffle = false;
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -73,6 +83,7 @@ public class Player{
         return arrDestination;
     }
 
+
     /**
      * Remove a musica que sera excluida da lista de Songs
      * Funciona da mesma forma que a funcao removeElement acima, porem para a classe Song e a variavel listaSong
@@ -87,6 +98,7 @@ public class Player{
         System.arraycopy(arr, indexRemoved + 1, arrDestination, indexRemoved, remainingElements);
         return arrDestination;
     }
+
 
     /**
      * Configura os botoes na tela quando apertamos 'play now'
@@ -116,6 +128,7 @@ public class Player{
         currentFrame = 0;
     };
 
+
     /**
      * Configura os botoes na tela quando terminamos a musica ou apertamos 'stop'
      */
@@ -130,6 +143,7 @@ public class Player{
         window.setEnabledScrubber(false);
         window.resetMiniPlayer();
     }
+
 
     /**
      * Funcao principal do botao 'play now'
@@ -204,19 +218,11 @@ public class Player{
 
                         //Caso estejamos tocando a ultima musica da lista
                         if(index == listaSong.length - 1) {
-                            if (!estado_loop){
-                                window.setEnabledNextButton(false);
-                            } else {
-                                index = 0;
-                            }
+                            window.setEnabledNextButton(false);
                         }
                         //Caso não estejamos tocando a ultima musica da lista
                         else {
-                            if (estado_loop && index != listaSong.length - 1){
-                                index++;
-                            } else {
-                                window.setEnabledNextButton(true);
-                            }
+                            window.setEnabledNextButton(true);
                         }
 
                         //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
@@ -225,7 +231,6 @@ public class Player{
                             //resetando o estado do frameToSkip
                             frameToSkip = -1;
                         }
-
                     }
 
                     //Se o botão de Previous foi pressionado
@@ -237,22 +242,22 @@ public class Player{
                     }
                     //Caso precise ir para a proxima musica
                     else if (indexChange == 1){
-                        //Incrementando index para tocar a proxima musica, se estiver tocando a ultima musica e o estado de loop estiver ligado index não é somado
-                        if (estado_loop && index == listaSong.length - 1){
-                            continue;
-                        } else {
-                            index++;
-                        }
+                        //Incrementando index para tocar a proxima musica
+                        index++;
                     }
                     //Caso tenhamos removido a musica que esta tocando atualmente
                     else {
                         indexChange = 1;
                     }
 
+                    if(loop && index == listaSong.length) {
+                        index = 0;
+                    }
+
                     //Configurando os botoes ("window reset")
-                    //if (estado_loop == false){
-                    end_song();
-                    //}
+                    if (!loop && index == listaSong.length){
+                        end_song();
+                    }
                 }
                 //Configurando os botoes ("window reset")
                 end_song();
@@ -262,6 +267,7 @@ public class Player{
         //Iniciando a execucao da thread criada
         thr.execute();
     };
+
 
     /**
      * Funcao principal do botao 'Remove'
@@ -310,7 +316,14 @@ public class Player{
 
         //Removendo os dados da musica escolhida da listaSong
         listaSong = removeElementSong(listaSong, indexRemovido);
+
+        //Caso o modo Shuffle esteja ativado, a remoção também precisa ocorrer nas listas reservas
+        if (shuffle) {
+            listaStringReserva = removeElement(listaStringReserva, listaIndex[indexRemovido]);
+            listaSongReserva = removeElementSong(listaSongReserva, listaIndex[indexRemovido]);
+        }
     };
+
 
     /**
      * Funcao principal do botao 'Add Song'
@@ -344,8 +357,20 @@ public class Player{
             int N2 = listaSong.length;
             listaSong = Arrays.copyOf(listaSong, N2 + 1);
             listaSong[N2] = novo;
+
+            //Caso o modo Shuffle esteja ativado, a adição também precisa ocorrer nas listas reservas
+            if (shuffle) {
+                listaStringReserva = Arrays.copyOf(listaStringReserva, N + 1);
+                listaStringReserva[N] = novo.getDisplayInfo();
+                listaSongReserva = Arrays.copyOf(listaSongReserva, N2 + 1);
+                listaSongReserva[N2] = novo;
+
+            } else {
+
+            }
         }
     };
+
 
     /**
      * Funcao principal do botao 'play/pause'
@@ -360,6 +385,7 @@ public class Player{
         window.setPlayPauseButtonIcon(playPauseState);
     };
 
+
     /**
      * Funcao principal do botao 'stop'
      */
@@ -368,6 +394,8 @@ public class Player{
         // a musica seja interrompido, terminando a thread
         thr.cancel(true);
     };
+
+
     /**
      * Função principal do botao 'Next'
      */
@@ -375,6 +403,8 @@ public class Player{
         //Mudando currentFrame para sair do loop da musica atual e passarmos para a proxima
         currentFrame = listaSong[index].getNumFrames();
     };
+
+
     /**
      * Função principal do botao 'Previous'
      */
@@ -382,12 +412,70 @@ public class Player{
         indexChange = 0;
         currentFrame = listaSong[index].getNumFrames();
     };
+
+
+    /**
+     * Função principal do botao 'Shuffle'
+     */
     private final ActionListener buttonListenerShuffle = e -> {
-        estado_shuffle = true;
+        shuffle = !shuffle;
+
+        //Se o botão de shuffle foi ativado
+        if (shuffle){
+            //Copiando valores das listas com informações para as listas reservas
+            listaStringReserva = listaString.clone();
+            listaSongReserva = listaSong.clone();
+
+            //Criando o array de indexs
+            listaIndex = new Integer[listaSong.length];
+
+            //Colocando os indexs de maneira ordenada, de 0 a N
+            for (int i = 0; i < listaSong.length; i++) {
+                listaIndex[i] = i;
+            }
+
+            //Criando um ArrayList com o Array de indexs para usar o método de shuffle
+            List<Integer> intList = Arrays.asList(listaIndex);
+            //Ordenando aleatóriamente o ArrayList
+            Collections.shuffle(intList);
+            //Retornando os valores do ArrayList para o Array de indexs
+            intList.toArray(listaIndex);
+
+            //Sincronizando os arrays de informação com os novos indexs aleatórios
+            for (int i = 0; i < listaSong.length; i++) {
+                listaString[i] = listaStringReserva[listaIndex[i]];
+                listaSong[i] = listaSongReserva[listaIndex[i]];
+            }
+
+            //Atualizando a janela com a nova ordem das músicas
+            window.setQueueList(listaString);
+
+            //System.out.println(Arrays.toString(listaIndex));
+
+        }
+
+        //Se o botão de shuffle foi desativado
+        else {
+            //Voltando as listas com informações ao estado original contido nas listas reservas (caso tenha sido feita alguma
+            // adição ou remoção, também já foi feita nos arrays reservas)
+            listaString = listaStringReserva.clone();
+            listaSong = listaSongReserva.clone();
+
+            //Atualizando a tela com a ordem antiga das músicas + as alterações, se houve alguma
+            window.setQueueList(listaString);
+        }
+
     };
+
+
+    /**
+     * Função principal do botao 'Loop'
+     */
     private final ActionListener buttonListenerLoop = e -> {
-        estado_loop = true;
+        loop = !loop;
     };
+
+
     /**
      * Função principal das interacoes com o 'Scrubber'
      */
@@ -408,6 +496,7 @@ public class Player{
             frameToSkip = (int) (window.getScrubberValue()/listaSong[index].getMsPerFrame());
         }
     };
+
 
     public Player() {
         EventQueue.invokeLater(() -> window = new PlayerWindow(
