@@ -392,6 +392,9 @@ public class Player{
             listaStringReserva = listaString.clone();
             listaSongReserva = listaSong.clone();
 
+            listaString[0] = listaString[index];
+            listaSong[0] = listaSong[index];
+
             //Criando o array de indexs
             listaIndex = new Integer[listaSong.length];
 
@@ -406,11 +409,16 @@ public class Player{
             Collections.shuffle(intList);
             //Retornando os valores do ArrayList para o Array de indexs
             intList.toArray(listaIndex);
+            int in = 0;
 
             //Sincronizando os arrays de informação com os novos indexs aleatórios
-            for (int i = 0; i < listaSong.length; i++) {
-                listaString[i] = listaStringReserva[listaIndex[i]];
-                listaSong[i] = listaSongReserva[listaIndex[i]];
+            for (int i = 1; i < listaSong.length; i++) {
+                if (listaStringReserva[listaIndex[in]] == listaString[0]) {
+                    in++;
+                }
+                listaString[i] = listaStringReserva[listaIndex[in]];
+                listaSong[i] = listaSongReserva[listaIndex[in]];
+                in++;
             }
 
             //Atualizando a janela com a nova ordem das músicas
