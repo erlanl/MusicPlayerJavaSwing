@@ -202,6 +202,11 @@ public class Player{
                         if (listaString.length >= 2){
                             window.setEnabledShuffleButton(true);
                         }
+                        if (shuffle){
+                            index = 0;
+                            window.setEnabledPreviousButton(false);
+                            shuffle = false;
+                        }
 
                         //Caso estejamos tocando a ultima musica da lista, vamos ativar o botão de 'Next'
                         window.setEnabledNextButton(index != listaSong.length - 1);
@@ -234,9 +239,8 @@ public class Player{
                     if(loop && index == listaSong.length) {
                         index = 0;
                     }
-
                     //Configurando os botoes ("window reset")
-                    if (!loop && index == listaSong.length){
+                    else if (index == listaSong.length){
                         end_song();
                     }
                 }
@@ -378,7 +382,9 @@ public class Player{
      * Função principal do botao 'Shuffle'
      */
     private final ActionListener buttonListenerShuffle = e -> {
-        shuffle = !shuffle;
+        if(listaSongReserva == null) {
+            shuffle = true;
+        }
 
         //Se o botão de shuffle foi ativado
         if (shuffle){
@@ -423,6 +429,9 @@ public class Player{
 
             //Atualizando a tela com a ordem antiga das músicas + as alterações, se houve alguma
             window.setQueueList(listaString);
+
+            listaSongReserva = null;
+            listaStringReserva = null;
         }
 
     };
