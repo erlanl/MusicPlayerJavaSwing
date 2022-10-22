@@ -13,7 +13,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -109,24 +108,14 @@ public class Player{
         window.setEnabledLoopButton(true);
         window.setEnabledStopButton(Boolean.TRUE);
 
-        if (indexNumber == 0) {
-            window.setEnabledPreviousButton(false);
-        }
-        else {
-            window.setEnabledPreviousButton(true);
-        }
+        window.setEnabledPreviousButton(indexNumber != 0);
 
-        if(indexNumber == lista.length - 1) {
-            window.setEnabledNextButton(false);
-        }
-        else {
-            window.setEnabledNextButton(true);
-        }
+        window.setEnabledNextButton(indexNumber != lista.length - 1);
         //window.setEnabledScrubber(true);
         window.setEnabledShuffleButton(false);
         window.setEnabledScrubber(true);
         currentFrame = 0;
-    };
+    }
 
 
     /**
@@ -184,17 +173,15 @@ public class Player{
                     //Armazenando novos Audio Device, Decoder e Bitstream nessas variaveis
                     try {
                         device = FactoryRegistry.systemRegistry().createAudioDevice();
-                    } catch (JavaLayerException ex) {
-                    }
-
-                    try {
                         device.open(decoder = new Decoder());
                     } catch (JavaLayerException ex) {
+                        continue;
                     }
 
                     try {
                         bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
                     } catch (FileNotFoundException ex) {
+                        continue;
                     }
 
                     //Configurando os botaos
@@ -216,14 +203,8 @@ public class Player{
                             window.setEnabledShuffleButton(true);
                         }
 
-                        //Caso estejamos tocando a ultima musica da lista
-                        if(index == listaSong.length - 1) {
-                            window.setEnabledNextButton(false);
-                        }
-                        //Caso não estejamos tocando a ultima musica da lista
-                        else {
-                            window.setEnabledNextButton(true);
-                        }
+                        //Caso estejamos tocando a ultima musica da lista, vamos ativar o botão de 'Next'
+                        window.setEnabledNextButton(index != listaSong.length - 1);
 
                         //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
                         if(frameToSkip != -1) {
@@ -291,23 +272,11 @@ public class Player{
             index--;
 
             //Reconfigurando os botoes Previous e Next caso necessario
-            //Caso estejamos tocando a primeira musica da lista
-            if (index == 0) {
-                window.setEnabledPreviousButton(false);
-            }
-            //Caso não estejamos tocando a primeira musica da lista
-            else {
-                window.setEnabledPreviousButton(true);
-            }
+            //Caso estejamos tocando a primeira musica da lista, vamos ativar o botão 'Previous'
+            window.setEnabledPreviousButton(index != 0);
 
-            //Caso estejamos tocando a ultima musica da lista
-            if(index == listaSong.length - 2) {
-                window.setEnabledNextButton(false);
-            }
-            //Caso não estejamos tocando a ultima musica da lista
-            else {
-                window.setEnabledNextButton(true);
-            }
+            //Caso estejamos tocando a ultima musica da lista, vamos ativar o botão 'Next'
+            window.setEnabledNextButton(index != listaSong.length - 2);
         }
 
         //Removendo as informacoes da musica escolhida da listaString e da tela
@@ -333,13 +302,7 @@ public class Player{
         Song novo;
         try {
             novo = this.window.openFileChooser();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (BitstreamException ex) {
-            throw new RuntimeException(ex);
-        } catch (UnsupportedTagException ex) {
-            throw new RuntimeException(ex);
-        } catch (InvalidDataException ex) {
+        } catch (IOException | BitstreamException | UnsupportedTagException | InvalidDataException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -364,9 +327,6 @@ public class Player{
                 listaStringReserva[N] = novo.getDisplayInfo();
                 listaSongReserva = Arrays.copyOf(listaSongReserva, N2 + 1);
                 listaSongReserva[N2] = novo;
-
-            } else {
-
             }
         }
     };
@@ -471,9 +431,7 @@ public class Player{
     /**
      * Função principal do botao 'Loop'
      */
-    private final ActionListener buttonListenerLoop = e -> {
-        loop = !loop;
-    };
+    private final ActionListener buttonListenerLoop = e -> loop = !loop;
 
 
     /**
@@ -518,19 +476,18 @@ public class Player{
     //<editor-fold desc="Essential">
 
     /**
-     * @return False if there are no more frames to play.
+     *
      */
-    private boolean playNextFrame() throws JavaLayerException {
+    private void playNextFrame() throws JavaLayerException {
         // TODO Is this thread safe?
         if (device != null) {
             Header h = bitstream.readFrame();
-            if (h == null) return false;
+            if (h == null) return;
 
             SampleBuffer output = (SampleBuffer) decoder.decodeFrame(h, bitstream);
             device.write(output.getBuffer(), 0, output.getBufferLength());
             bitstream.closeFrame();
         }
-        return true;
     }
 
     /**
@@ -568,17 +525,14 @@ public class Player{
             //Armazenando novos Audio Device, Decoder e Bitstream nessas variaveis
             try {
                 device = FactoryRegistry.systemRegistry().createAudioDevice();
-            } catch (JavaLayerException ex) {
-            }
-
-            try {
                 device.open(decoder = new Decoder());
-            } catch (JavaLayerException ex) {
+            } catch (JavaLayerException ignored) {
+
             }
 
             try {
                 bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
-            } catch (FileNotFoundException ex) {
+            } catch (FileNotFoundException ignored) {
             }
 
             //Resetando o valor de currentFrame
