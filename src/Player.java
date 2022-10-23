@@ -62,6 +62,8 @@ public class Player{
     //Array com os indexs aleatórios
     private Integer[] listaIndex;
 
+    private int antigo_index;
+
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -387,12 +389,15 @@ public class Player{
      * Função principal do botao 'Shuffle'
      */
     private final ActionListener buttonListenerShuffle = e -> {
-        if(listaSongReserva == null) {
+        //shuffle = !shuffle;
+        if (listaSongReserva == null) {
             shuffle = true;
+        } else {
+            shuffle = false;
         }
-
         //Se o botão de shuffle foi ativado
-        if (shuffle){
+
+        if (shuffle) {
             //Copiando valores das listas com informações para as listas reservas
             listaStringReserva = listaString.clone();
             listaSongReserva = listaSong.clone();
@@ -403,7 +408,7 @@ public class Player{
                 listaSong[0] = listaSong[index];
                 System.out.println("Entrou if 1");
             } else {
-                if (thr != null){
+                if (thr != null) {
                     if (!thr.isDone()) {
                         listaString[0] = listaString[index];
                         listaSong[0] = listaSong[index];
@@ -427,46 +432,51 @@ public class Player{
             //Retornando os valores do ArrayList para o Array de indexs
             intList.toArray(listaIndex);
             int in = 0;
+            int cmc;
+            antigo_index = 0;
+
+            if (thr == null) {
+                cmc = 0;
+            } else {
+                cmc = 1;
+            }
 
             //Sincronizando os arrays de informação com os novos indexs aleatórios
-            if (thr == null){
-                for (int i = 0; i < listaSong.length; i++) {
-                    listaString[i] = listaStringReserva[listaIndex[i]];
-                    listaSong[i] = listaSongReserva[listaIndex[i]];
-                }
-            } else {
-                for (int i = 1; i < listaSong.length; i++) {
-                    if (listaStringReserva[listaIndex[in]] == listaString[0] && thr != null) {
-                        in++;
-                    } else {
-                        if (listaStringReserva[listaIndex[in]] == listaString[0]) {
-                            if (thr != null) {
-                                if (!thr.isDone()) {
-                                    in++;
-                                }
+            for (int i = cmc; i < listaSong.length; i++) {
+                if (listaStringReserva[listaIndex[in]] == listaString[0] && thr != null) {
+                    in++;
+                } else {
+                    if (listaStringReserva[listaIndex[in]] == listaString[0]) {
+                        if (thr != null) {
+                            if (!thr.isDone()) {
+                                in++;
                             }
                         }
                     }
-                    listaString[i] = listaStringReserva[listaIndex[in]];
-                    listaSong[i] = listaSongReserva[listaIndex[in]];
-                    in++;
                 }
+                listaString[i] = listaStringReserva[listaIndex[in]];
+                listaSong[i] = listaSongReserva[listaIndex[in]];
+                in++;
             }
-            //Atualizando a janela com a nova ordem das músicas
-            window.setQueueList(listaString);
 
-            System.out.println("APERTANDO O SHUFFLE:" + Arrays.toString(listaIndex));
+            //Atualizando a janela com a nova ordem das músicas
+            this.window.setQueueList(listaString);
+
+            //System.out.println("APERTANDO O SHUFFLE:" + index);
+            antigo_index = index;
+            //System.out.println("SOLTANDO O SHUFFLE:" + antigo_index);
         }
         //Se o botão de shuffle foi desativado
         else {
             //Voltando as listas com informações ao estado original contido nas listas reservas (caso tenha sido feita alguma
             // adição ou remoção, também já foi feita nos arrays reservas)
+
             listaString = listaStringReserva.clone();
             listaSong = listaSongReserva.clone();
 
+
             //Atualizando a tela com a ordem antiga das músicas + as alterações, se houve alguma
-            System.out.println("SOLTANDO O SHUFFLE:" + Arrays.toString(listaIndex));
-            window.setQueueList(listaString);
+            this.window.setQueueList(listaString);
 
             listaSongReserva = null;
             listaStringReserva = null;
