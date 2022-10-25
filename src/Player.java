@@ -64,6 +64,8 @@ public class Player{
 
     private int antigo_index;
 
+    private int indexinicial;
+
 
     /**
      * Remove a musica que sera excluida da lista de Strings
@@ -238,6 +240,7 @@ public class Player{
                         indexChange = 1;
                     }
 
+
                     if(loop && index == listaSong.length) {
                         index = 0;
                     }
@@ -394,6 +397,7 @@ public class Player{
             shuffle = true;
         } else {
             shuffle = false;
+            System.out.println(indexinicial);
         }
         //Se o botão de shuffle foi ativado
 
@@ -401,21 +405,6 @@ public class Player{
             //Copiando valores das listas com informações para as listas reservas
             listaStringReserva = listaString.clone();
             listaSongReserva = listaSong.clone();
-
-
-            if (thr != null) {
-                listaString[0] = listaString[index];
-                listaSong[0] = listaSong[index];
-                System.out.println("Entrou if 1");
-            } else {
-                if (thr != null) {
-                    if (!thr.isDone()) {
-                        listaString[0] = listaString[index];
-                        listaSong[0] = listaSong[index];
-                        System.out.println("Entrou if 2");
-                    }
-                }
-            }
 
             //Criando o array de indexs
             listaIndex = new Integer[listaSong.length];
@@ -431,29 +420,30 @@ public class Player{
             Collections.shuffle(intList);
             //Retornando os valores do ArrayList para o Array de indexs
             intList.toArray(listaIndex);
+
+
             int in = 0;
             int cmc;
             antigo_index = 0;
 
-            if (thr == null) {
-                cmc = 0;
-            } else {
+            if(thr != null) {
+                if (!thr.isDone()) {
+                    listaString[0] = listaString[index];
+                    listaSong[0] = listaSong[index];
+                }
                 cmc = 1;
+            } else {
+                cmc = 0;
             }
 
             //Sincronizando os arrays de informação com os novos indexs aleatórios
             for (int i = cmc; i < listaSong.length; i++) {
                 if (listaStringReserva[listaIndex[in]] == listaString[0] && thr != null) {
-                    in++;
-                } else {
-                    if (listaStringReserva[listaIndex[in]] == listaString[0]) {
-                        if (thr != null) {
-                            if (!thr.isDone()) {
-                                in++;
-                            }
-                        }
+                    if (!thr.isDone()) {
+                        in++;
                     }
                 }
+
                 listaString[i] = listaStringReserva[listaIndex[in]];
                 listaSong[i] = listaSongReserva[listaIndex[in]];
                 in++;
@@ -470,16 +460,23 @@ public class Player{
             //Voltando as listas com informações ao estado original contido nas listas reservas (caso tenha sido feita alguma
             // adição ou remoção, também já foi feita nos arrays reservas)
             System.out.println(index);
+            System.out.println(listaIndex[index]);
+            System.out.println(listaIndex[antigo_index]);
             System.out.println(antigo_index);
             System.out.println(Arrays.toString(listaString[index]));
+            System.out.println(Arrays.deepToString(listaIndex));
+            System.out.println(Arrays.toString(listaString[listaIndex[index]]));
+            System.out.println(Arrays.toString(listaStringReserva[index]));
+            System.out.println(Arrays.toString(listaStringReserva[listaIndex[index]]));
             System.out.println(Arrays.toString(listaStringReserva[antigo_index]));
 
             if (listaString[index] == listaStringReserva[antigo_index]){
                 index = antigo_index;
             } else {
-                System.out.println(index);
-                index = listaIndex[index];
-                System.out.println(index);
+                if (listaStringReserva[listaIndex[0]] == listaString[index]){
+                    System.out.println("Entrou");
+                    index = listaIndex[0];
+                }
             }
 
             listaString = listaStringReserva.clone();
