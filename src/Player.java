@@ -364,9 +364,22 @@ public class Player{
 
         //Caso o modo Shuffle esteja ativado, a remoção também precisa ocorrer nas listas reservas
         if (listaSongReserva != null) {
-            listaIndex = removeElementInteger(listaIndex, listaIndex[indexRemovido]);
-            listaStringReserva = removeElement(listaStringReserva, listaIndex[indexRemovido]);
-            listaSongReserva = removeElementSong(listaSongReserva, listaIndex[indexRemovido]);
+            System.out.println(indexRemovido);
+            System.out.println(listaIndex[indexRemovido]);
+            System.out.println(Arrays.toString(listaIndex));
+
+            int indexRemovidoAuxiliar = listaIndex[indexRemovido];
+            for (int i = 0; i < listaIndex.length; i++){
+                if (listaIndex[i] > indexRemovidoAuxiliar){
+                    listaIndex[i]--;
+                }
+            }
+
+            listaIndex = removeElementInteger(listaIndex, indexRemovido);
+            System.out.println(Arrays.toString(listaIndex));
+
+            listaStringReserva = removeElement(listaStringReserva, indexRemovidoAuxiliar);
+            listaSongReserva = removeElementSong(listaSongReserva, indexRemovidoAuxiliar);
         }
     };
 
@@ -477,6 +490,11 @@ public class Player{
         //Se o botão de shuffle foi desativado
         else {
             //Atualizando o index da música que deveria ser tocada para o index antes da lista ser aleatorizada
+            System.out.println(index);
+            System.out.println(Arrays.deepToString(listaIndex));
+            System.out.println(Arrays.deepToString(listaString));
+            System.out.println(Arrays.deepToString(listaStringReserva));
+
             for (int i = 0; i < listaString.length; i++){
                 //Procurando na lista antiga qual o index da música referente a música atual de index aleatorizado
                 if (listaStringReserva[listaIndex[i]] == listaString[index]){
