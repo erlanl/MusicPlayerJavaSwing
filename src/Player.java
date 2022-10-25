@@ -62,9 +62,6 @@ public class Player{
     //Array com os indexs aleatórios
     private Integer[] listaIndex;
 
-    private int antigo_index;
-
-    private int indexinicial;
 
 
     /**
@@ -121,6 +118,25 @@ public class Player{
         currentFrame = 0;
     }
 
+    public void changeIndex() {
+        //Se o botão de Previous foi pressionado
+        if (indexChange == 0) {
+            //decrementamos index, voltando uma musica
+            index--;
+            //resetando estado da variável booleana
+            indexChange = 1;
+        }
+        //Caso precise ir para a proxima musica
+        else if (indexChange == 1){
+            //Incrementando index para tocar a proxima musica
+            index++;
+        }
+        //Caso tenhamos removido a musica que esta tocando atualmente
+        else {
+            indexChange = 1;
+        }
+    }
+
 
     /**
      * Configura os botoes na tela quando terminamos a musica ou apertamos 'stop'
@@ -135,6 +151,90 @@ public class Player{
         window.setEnabledShuffleButton(false);
         window.setEnabledScrubber(false);
         window.resetMiniPlayer();
+    }
+
+    public void changeLists() {
+        //Criando o array de indexs
+        listaIndex = new Integer[listaSong.length];
+
+        //Colocando os indexs de maneira ordenada, de 0 a N
+        for (int i = 0; i < listaSong.length; i++) {
+            listaIndex[i] = i;
+        }
+
+        //Criando um ArrayList com o Array de indexs para usar o método de shuffle
+        List<Integer> intList = Arrays.asList(listaIndex);
+        //Ordenando aleatóriamente o ArrayList
+        Collections.shuffle(intList);
+        //Retornando os valores do ArrayList para o Array de indexs
+        intList.toArray(listaIndex);
+
+
+        int aux = 0;
+        int start;
+
+        //Se estiver tocando alguma música, ela deveria ir para o início da lista, então o método de sincronizar os index aleatórios começa no index 1
+        if(thr != null) {
+            if (!thr.isDone()) {
+                listaString[0] = listaString[index];
+                listaSong[0] = listaSong[index];
+            }
+            start = 1;
+        }
+
+        //Se não estiver tocando nenhuma música, então a sincronização começa do index 0
+        else {
+            start = 0;
+        }
+
+        //Sincronizando os arrays de informação com os novos indexs aleatórios
+        for (int i = start; i < listaSong.length; i++) {
+            if (listaStringReserva[listaIndex[aux]] == listaString[0] && thr != null) {
+                if (!thr.isDone()) {
+                    aux++;
+                }
+            }
+
+            listaString[i] = listaStringReserva[listaIndex[aux]];
+            listaSong[i] = listaSongReserva[listaIndex[aux]];
+            aux++;
+        }
+    }
+
+    public void loopSong() throws JavaLayerException {
+        //Loop para tocar a musica, ira terminar caso a musica termine ou caso tentem terminar a thread e nao consigam
+        while (currentFrame < listaSong[index].getNumFrames() && !thr.isCancelled()) {
+            //Caso a musica esteja no estado de play
+            if (playPauseState == 1) {
+                //Tocando o proximo frame
+                playNextFrame();
+                //Calculando o tempo em que a musica esta e pondo na tela
+                window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
+                currentFrame++;
+            }
+
+            //Se o botão shuffle for ativado, significa que terá que tocar a música no index 0, ou seja, a música tocando no momento que o botão foi pressionado
+            if (shuffle){
+                index = 0;
+                window.setEnabledPreviousButton(false);
+                shuffle = false;
+            }
+
+            //Botão de Shuffle disponível quando tem duas ou mais músicas
+            if (listaString.length >= 2){
+                window.setEnabledShuffleButton(true);
+            }
+
+            //Caso estejamos tocando a ultima musica da lista, vamos ativar o botão de 'Next'
+            window.setEnabledNextButton(index != listaSong.length - 1);
+
+            //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
+            if(frameToSkip != -1) {
+                skipToFrame(frameToSkip);
+                //resetando o estado do frameToSkip
+                frameToSkip = -1;
+            }
+        }
     }
 
 
@@ -178,13 +278,8 @@ public class Player{
                     try {
                         device = FactoryRegistry.systemRegistry().createAudioDevice();
                         device.open(decoder = new Decoder());
-                    } catch (JavaLayerException ex) {
-                        continue;
-                    }
-
-                    try {
                         bitstream = new Bitstream(listaSong[index].getBufferedInputStream());
-                    } catch (FileNotFoundException ex) {
+                    } catch (JavaLayerException | FileNotFoundException ex) {
                         continue;
                     }
 
@@ -192,54 +287,9 @@ public class Player{
                     start_window(index, listaSong);
 
                     //Loop para tocar a musica, ira terminar caso a musica termine ou caso tentem terminar a thread e nao consigam
-                    while (currentFrame < listaSong[index].getNumFrames() && !thr.isCancelled()) {
-                        //Caso a musica esteja no estado de play
-                        if (playPauseState == 1) {
-                            //Tocando o proximo frame
-                            playNextFrame();
-                            //Calculando o tempo em que a musica esta e pondo na tela
-                            window.setTime((int) (currentFrame * listaSong[index].getMsPerFrame()), (int) (listaSong[index].getNumFrames() * listaSong[index].getMsPerFrame()));
-                            currentFrame++;
-                        }
+                    loopSong();
 
-                        if (shuffle){
-                            index = 0;
-                            window.setEnabledPreviousButton(false);
-                            shuffle = false;
-                        }
-
-                        if (listaString.length >= 2){
-                            window.setEnabledShuffleButton(true);
-                        }
-
-                        //Caso estejamos tocando a ultima musica da lista, vamos ativar o botão de 'Next'
-                        window.setEnabledNextButton(index != listaSong.length - 1);
-
-                        //Se o frame que queremos pular mudou de seu valor inicial, significa que vamos alterar o curso da musica
-                        if(frameToSkip != -1) {
-                            skipToFrame(frameToSkip);
-                            //resetando o estado do frameToSkip
-                            frameToSkip = -1;
-                        }
-                    }
-
-                    //Se o botão de Previous foi pressionado
-                    if (indexChange == 0) {
-                        //decrementamos index, voltando uma musica
-                        index--;
-                        //resetando estado da variável booleana
-                        indexChange = 1;
-                    }
-                    //Caso precise ir para a proxima musica
-                    else if (indexChange == 1){
-                        //Incrementando index para tocar a proxima musica
-                        index++;
-                    }
-                    //Caso tenhamos removido a musica que esta tocando atualmente
-                    else {
-                        indexChange = 1;
-                    }
-
+                    changeIndex();
 
                     if(loop && index == listaSong.length) {
                         index = 0;
@@ -392,102 +442,40 @@ public class Player{
      * Função principal do botao 'Shuffle'
      */
     private final ActionListener buttonListenerShuffle = e -> {
-        //shuffle = !shuffle;
-        if (listaSongReserva == null) {
-            shuffle = true;
-        } else {
-            shuffle = false;
-            System.out.println(indexinicial);
-        }
-        //Se o botão de shuffle foi ativado
+        //Se a listaSongReserva for nula, então o shuffle é true, se não, é false
+        shuffle = (listaSongReserva == null);
 
+        //Se o botão de shuffle foi ativado
         if (shuffle) {
             //Copiando valores das listas com informações para as listas reservas
             listaStringReserva = listaString.clone();
             listaSongReserva = listaSong.clone();
 
-            //Criando o array de indexs
-            listaIndex = new Integer[listaSong.length];
-
-            //Colocando os indexs de maneira ordenada, de 0 a N
-            for (int i = 0; i < listaSong.length; i++) {
-                listaIndex[i] = i;
-            }
-
-            //Criando um ArrayList com o Array de indexs para usar o método de shuffle
-            List<Integer> intList = Arrays.asList(listaIndex);
-            //Ordenando aleatóriamente o ArrayList
-            Collections.shuffle(intList);
-            //Retornando os valores do ArrayList para o Array de indexs
-            intList.toArray(listaIndex);
-
-
-            int in = 0;
-            int cmc;
-            antigo_index = 0;
-
-            if(thr != null) {
-                if (!thr.isDone()) {
-                    listaString[0] = listaString[index];
-                    listaSong[0] = listaSong[index];
-                }
-                cmc = 1;
-            } else {
-                cmc = 0;
-            }
-
-            //Sincronizando os arrays de informação com os novos indexs aleatórios
-            for (int i = cmc; i < listaSong.length; i++) {
-                if (listaStringReserva[listaIndex[in]] == listaString[0] && thr != null) {
-                    if (!thr.isDone()) {
-                        in++;
-                    }
-                }
-
-                listaString[i] = listaStringReserva[listaIndex[in]];
-                listaSong[i] = listaSongReserva[listaIndex[in]];
-                in++;
-            }
-
-            //Atualizando a janela com a nova ordem das músicas
-            this.window.setQueueList(listaString);
-            //System.out.println("APERTANDO O SHUFFLE:" + index);
-            antigo_index = index;
-            //System.out.println("SOLTANDO O SHUFFLE:" + antigo_index);
+            //Aleatorizando as listas
+            changeLists();
         }
         //Se o botão de shuffle foi desativado
         else {
-            //Voltando as listas com informações ao estado original contido nas listas reservas (caso tenha sido feita alguma
-            // adição ou remoção, também já foi feita nos arrays reservas)
-            System.out.println(index);
-            System.out.println(listaIndex[index]);
-            System.out.println(listaIndex[antigo_index]);
-            System.out.println(antigo_index);
-            System.out.println(Arrays.toString(listaString[index]));
-            System.out.println(Arrays.deepToString(listaIndex));
-            System.out.println(Arrays.toString(listaString[listaIndex[index]]));
-            System.out.println(Arrays.toString(listaStringReserva[index]));
-            System.out.println(Arrays.toString(listaStringReserva[listaIndex[index]]));
-            System.out.println(Arrays.toString(listaStringReserva[antigo_index]));
 
-            if (listaString[index] == listaStringReserva[antigo_index]){
-                index = antigo_index;
-            } else {
-                if (listaStringReserva[listaIndex[0]] == listaString[index]){
-                    System.out.println("Entrou");
-                    index = listaIndex[0];
+            //Atualizando o index da música que deveria ser tocada para o index antes da lista ser aleatorizada
+            for (int i = 0; i < listaString.length; i++){
+                if (listaStringReserva[listaIndex[i]] == listaString[index]){
+                    index = listaIndex[i];
+                    break;
                 }
             }
 
+            //Voltando as listas com informações ao estado original contido nas listas reservas + as alterações
             listaString = listaStringReserva.clone();
             listaSong = listaSongReserva.clone();
 
-            //Atualizando a tela com a ordem antiga das músicas + as alterações, se houve alguma
-            this.window.setQueueList(listaString);
-
+            //Reinicando valores das listas reservas
             listaSongReserva = null;
             listaStringReserva = null;
         }
+
+        //Atualizando a janela com a nova ordem das músicas
+        this.window.setQueueList(listaString);
 
     };
 
