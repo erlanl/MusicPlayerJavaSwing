@@ -169,6 +169,8 @@ public class Player{
     public void changeLists() {
         //Criando o array de indexs
         listaIndex = new Integer[listaSong.length];
+        //Inicializando as váriaveis auxiliare
+        int playingSongIndex;
 
         //Colocando os indexs de maneira ordenada, de 0 a N
         for (int i = 0; i < listaSong.length; i++) {
@@ -182,43 +184,26 @@ public class Player{
         //Retornando os valores do List para o Array de indexs
         intList.toArray(listaIndex);
 
-        //Inicializando as váriaveis auxiliares
-        //int aux = 0;
-        int start;
-
-        for(int i = 0; i<listaIndex.length; i++) {
-            if(listaIndex[i] == index) {
-                start = listaIndex[0];
-                listaIndex[0] = listaIndex[i];
-                listaIndex[i] = start;
-                break;
-            }
-        }
-
         //Se estiver tocando alguma música, ela deveria ir para o início da lista, então o método de sincronizar os index aleatórios começa no index 1
         if(thr != null) {
             if (!thr.isDone()) {
-                listaString[0] = listaString[index];
-                listaSong[0] = listaSong[index];
+                //Loop para encontrar o indice no listaIndex da musica que esta tocando
+                for(int i = 0; i<listaIndex.length; i++) {
+                    if(listaIndex[i] == index) {
+                        //Trocando o elemento que esta na posicao 0 com o que esta no indice que encontramos
+                        playingSongIndex = listaIndex[0];
+                        listaIndex[0] = listaIndex[i];
+                        listaIndex[i] = playingSongIndex;
+                        break;
+                    }
+                }
             }
-//            start = 1;
         }
-        //Se não estiver tocando nenhuma música, então a sincronização começa do index 0
-//        else {
-//            start = 0;
-//        }
 
         //Sincronizando os arrays de informação com os novos indexs aleatórios
         for (int i = 0; i < listaSong.length; i++) {
-            //Se a música nessa posição for a música que estiver tocando na lista reserva, iremos incrementar o auxiliar para não repetirmos a música na lista de músicas atual
-            /*if (listaStringReserva[listaIndex[aux]] == listaString[0] && thr != null) {
-                if (!thr.isDone()) {
-                    aux++;
-                }
-            }*/
             listaString[i] = listaStringReserva[listaIndex[i]];
             listaSong[i] = listaSongReserva[listaIndex[i]];
-//            aux++;
         }
     }
 
@@ -361,22 +346,18 @@ public class Player{
             window.setEnabledNextButton(index != listaSong.length - 2);
         }
 
-        //Removendo as informacoes da musica escolhida da listaString e da tela
+        //Removendo as informacoes da musica escolhida da listaString, da tela e da listaSong
         listaString = removeElement(listaString, indexRemovido);
+        listaSong = removeElementSong(listaSong, indexRemovido);
 
         //Atualizando a lista na tela
         this.window.setQueueList(listaString);
 
-        //Removendo os dados da musica escolhida da listaSong
-        listaSong = removeElementSong(listaSong, indexRemovido);
-
-        //Caso o modo Shuffle esteja ativado, a remoção também precisa ocorrer nas listas reservas
+        //Caso o modo Shuffle esteja ativado, a remoção também precisa ocorrer nas listas reservas e na listaIndex
         if (listaSongReserva != null) {
-/*            System.out.println(indexRemovido);
-            System.out.println(listaIndex[indexRemovido]);*/
-            System.out.println(Arrays.toString(listaIndex));
-
             int indexRemovidoAuxiliar = listaIndex[indexRemovido];
+
+            //Decrementa todos os indices maiores do que o index removido para evitar o erro out of bounds
             for (int i = 0; i < listaIndex.length; i++){
                 if (listaIndex[i] > indexRemovidoAuxiliar){
                     listaIndex[i]--;
@@ -384,8 +365,6 @@ public class Player{
             }
 
             listaIndex = removeElementInteger(listaIndex, indexRemovido);
-            System.out.println(Arrays.toString(listaIndex));
-
             listaStringReserva = removeElement(listaStringReserva, indexRemovidoAuxiliar);
             listaSongReserva = removeElementSong(listaSongReserva, indexRemovidoAuxiliar);
         }
@@ -498,18 +477,7 @@ public class Player{
         //Se o botão de shuffle foi desativado
         else {
             //Atualizando o index da música que deveria ser tocada para o index antes da lista ser aleatorizada
-            System.out.println(index);
-            System.out.println(Arrays.deepToString(listaIndex));
-            System.out.println(Arrays.deepToString(listaString));
-            System.out.println(Arrays.deepToString(listaStringReserva));
-
-            for (int i = 0; i < listaString.length; i++){
-                //Procurando na lista antiga qual o index da música referente a música atual de index aleatorizado
-                if (listaStringReserva[listaIndex[i]] == listaString[index]){
-                    index = listaIndex[i];
-                    break;
-                }
-            }
+            index = listaIndex[index];
 
             //Voltando as listas com informações ao estado original contido nas listas reservas + as alterações
             listaString = listaStringReserva.clone();
